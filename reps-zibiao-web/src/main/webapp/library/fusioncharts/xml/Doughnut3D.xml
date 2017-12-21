@@ -1,0 +1,6 @@
+<chart  showBorder='1'  showLabels='1' showLegend='1' showValues='1'  >
+ <set value='80' label='语文'  ></set>
+ <set value='90' label='英语'  ></set>
+ <set value='90' label='数学'  ></set>
+ <set value='260' label='总分'  ></set>
+ </chart>

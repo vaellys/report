@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="tj" title="报表统计管理" showOrder="20" icon="seventeen_icon">
+	<description>Data Center 报表统计</description>
+	<menu>
+		<node code="tj000000" name="报表统计管理" type="Catalog" showOrder="2" icon="report" newpage="false">
+			<nodes>
+				<node code="tj010100" name="指标库管理" showOrder="1" newpage="false" type="Action">
+					<action>/reps/report/namespace/index.mvc;/reps/report/zbztmcdyb/list.mvc;/reps/report/zdyzbdyb/list.mvc;/reps/report/zdyzbdyb/show.mvc</action>
+					<nodes>
+						<node code="tj010102" name="添加指标主题" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/toadd.mvc;/reps/report/zbztmcdyb/add.mvc</action>
+						</node>
+						<node code="tj010103" name="修改指标主题" showOrder="2" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/toedit.mvc;/reps/report/zbztmcdyb/edit.mvc</action>
+						</node>
+						<node code="tj010104" name="删除指标分类" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/delete.mvc</action>
+						</node>
+						<node code="tj010202" name="添加指标" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/toadd.mvc;/reps/report/zdyzbdyb/add.mvc</action>
+						</node>
+						<node code="tj010203" name="修改指标" showOrder="2" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/toedit.mvc;/reps/report/zdyzbdyb/edit.mvc</action>
+						</node>
+						<node code="tj010204" name="删除指标" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/delete.mvc</action>
+						</node>
+					</nodes>
+				</node>
+			</nodes>
+		</node>
+	</menu>
+	<security>
+		 <authc>/reps/sys/district/tree.mvc</authc>
+	</security>
+</module>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+	<!-- <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+		<property name="configLocation" value="file:src/hibernate.cfg.xml"></property> 
+		</bean> -->
+
+	<!-- 配置数据源 -->
+	<!-- MySql -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/reps_test?characterEncoding=utf-8" />
+		<property name="username" value="root" />
+		<property name="password" value="root" />
+	</bean>
+
+	<!-- SQL Server -->
+	<!-- <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"> 
+		<property name="driverClassName" value="net.sourceforge.jtds.jdbc.Driver"/> 
+		<property name="url" value="jdbc:jtds:sqlserver://192.168.20.50:1433;DatabaseName=reps_test"/> 
+		<property name="username" value="sa"/> <property name="password" value="!Qaz2wsx"/> 
+		</bean> -->
+
+	<!-- 配置sessionfactory，该配置替代了hibernate.cfg.xml的配置 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+
+				<!-- <prop key="hibernate.dialect">org.hibernate.dialect.SQLServer2012Dialect</prop> -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+			</props>
+		</property>
+	</bean>
+
+</beans>

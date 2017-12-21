@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop  
+    http://www.springframework.org/schema/aop/spring-aop.xsd">
+    
+    <bean id="propertyPlaceholderConfigurer" class="com.reps.core.RepsConstant">
+		<property name="locations">
+			<list>
+				<value>classpath:application.properties</value>
+				<value>classpath:dbconfig.properties</value>
+				<value>classpath:buttonName.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 统一异常处理 -->
+	<bean class="com.reps.core.web.RepsExceptionHandler"></bean>
+	
+	<!-- cacheManager, 指定ehcache.xml的位置 --> 
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation">
+        	<value>classpath:ehcache.xml</value>
+        </property>
+        <!-- 由于hibernate也使用了Ehcache, 保证双方都使用同一个缓存管理器 -->
+        <property name="shared" value="true"/>
+    </bean>
+
+    <bean id="repsInterceptor" class="com.reps.core.orm.EntityInterceptor">
+        <property name="expandInterceptors">
+           <list>
+              <bean class="com.reps.core.log.LogEntityInterceptor"></bean>
+              <!-- 用于DSC 事件消息控制-->
+              <!-- <bean class="com.reps.dsc.EntityEventMsgInterceptor"></bean>  -->
+           </list>
+        </property>
+    </bean>  
+    
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+		   <list>
+			<value>com.reps.**.entity</value>
+		   </list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+<!-- 				<prop key="hibernate.hbm2ddl.auto">none</prop> -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">false</prop>
+
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+				<prop key="hibernate.jdbc.batch_size">20</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- jdbc通用Dao -->
+	<bean id="jdbcDao" class="com.reps.core.orm.wrapper.JdbcDao">
+		<constructor-arg index="0" ref="jdbcTemplate"/>
+	</bean>
+	
+	<!-- 通用Dao -->
+	<bean id="genericDao" class="com.reps.core.orm.wrapper.GenericDao">
+		<constructor-arg index="0" ref="sessionFactory"/>
+	</bean>
+	
+	<!-- 开启AOP监听  -->
+	<aop:aspectj-autoproxy expose-proxy="true" />
+	
+	<!-- 配置事务 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+		<property name="entityInterceptor" ref="repsInterceptor"/> 
+	</bean>
+
+	<!-- 配置注解实现管理事务（cglib：proxy-target-class="true"）
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	 -->
+	
+	<!-- hibernate4必须配置为开启事务 否则 getCurrentSession()获取不到 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="del*" propagation="REQUIRED" />
+			<tx:method name="*" propagation="REQUIRED" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+	<aop:config>
+		<aop:pointcut id="txPointcut" expression="execution(* com.reps..service.impl..*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" order="2" />
+	</aop:config>
+	
+	<!-- component-scan自动搜索@Component , @Controller , @Service , @Repository等标注的类 -->
+	<context:component-scan base-package="com.reps.**.dao" />
+	<context:component-scan base-package="com.reps.**.service" />
+	<context:component-scan base-package="com.reps.**.impl" />
+	
+    <!-- spring上下文工具类 -->
+	<bean id="springContextUtil" class="com.reps.core.SpringContext" />
+	
+	<!-- 系统上下文 -->
+	<bean id="systemContext" class="com.reps.system.SystemContext">
+	    <property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 系统数据 -->
+	<bean class="com.reps.system.SystemDataImpl">
+	    <property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 第三方应用key提供者 -->
+	<bean id="appKeyService" class="com.reps.core.api.impl.ConfigAppKey">
+	</bean>
+	
+	<!-- 定时器处理 -->
+	<!-- <bean id="scheduler" class="org.quartz.impl.StdSchedulerFactory" /> -->
+	
+	<!-- 菜单装载实现Start -->
+</beans>

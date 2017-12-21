@@ -1,0 +1,32 @@
+<chart palette='3' animation='1'  showValues='1' useRoundEdges='1' legendBorderAlpha='0'  > 
+<categories >
+	<category label= '语文' />
+	<category label= '数学' />
+	<category label= '英语' />
+	<category label= '总分' />
+</categories >
+<dataset  seriesname="a">
+	<set value= '81' ></set>
+	<set value= '91' ></set>
+	<set value= '91' ></set>
+	<set value= '263' ></set>
+</dataset>
+<dataset seriesname="b">
+	<set value= '89' ></set>
+	<set value= '88' ></set>
+	<set value= '76' ></set>
+	<set value= '253' ></set>
+</dataset>
+<dataset seriesname="c">
+	<set value= '80' ></set>
+	<set value= '90' ></set>
+	<set value= '90' ></set>
+	<set value= '260' ></set>
+</dataset>
+<dataset seriesname="d">
+	<set value= '68' ></set>
+	<set value= '85' ></set>
+	<set value= '64' ></set>
+	<set value= '217' ></set>
+</dataset>
+</chart>

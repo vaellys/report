@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/aop  
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc.xsd "> 
+	
+	<context:component-scan base-package="com.reps.*.action,com.reps.api.app">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service" />
+	</context:component-scan>
+	
+	<!-- 开启AOP监听  -->
+	<aop:aspectj-autoproxy expose-proxy="true" />
+	
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="104857600" /><!-- 设置上传文件的最大尺寸为100MB -->
+		<property name="maxInMemorySize" value="4096" />
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+	
+	<mvc:annotation-driven />
+	<mvc:resources mapping="/pages/**" location="classpath:/WEB-INF/pages/" />
+	
+    <bean id="viewResolver" class="com.reps.core.web.MultiplePrefixViewResolver">
+		  <property name="prefixes">
+		      <list>
+		         <value>/WEB-INF/pages/</value>
+		         <value>/</value>
+		      </list>
+		  </property>
+		  <property name="suffix" value=".jsp"/>  
+    </bean> 
+    
+</beans>

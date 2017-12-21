@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="tj" title="报表统计管理" showOrder="20" icon="seventeen_icon">
+	<description>Data Center 报表统计</description>
+	<menu>
+		<node code="tj000000" name="报表统计管理" type="Catalog" showOrder="2" icon="report" newpage="false">
+			<nodes>
+				<node code="tj010100" name="指标库管理" showOrder="1" newpage="false" type="Action">
+					<action>/reps/report/namespace/index.mvc;/reps/report/zbztmcdyb/list.mvc;/reps/report/zdyzbdyb/list.mvc;/reps/report/zdyzbdyb/show.mvc;/reps/report/zdyzbdyb/listdatabasetype.mvc;</action>
+					<nodes>
+						<node code="tj010102" name="添加指标主题" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/toadd.mvc;/reps/report/zbztmcdyb/add.mvc</action>
+						</node>
+						<node code="tj010103" name="修改指标主题" showOrder="2" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/toedit.mvc;/reps/report/zbztmcdyb/edit.mvc</action>
+						</node>
+						<node code="tj010104" name="删除指标分类" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/zbztmcdyb/delete.mvc</action>
+						</node>
+						<node code="tj010202" name="添加指标" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/toadd.mvc;/reps/report/zdyzbdyb/add.mvc;/reps/report/zdyzbdyb/toaddatabasetype.mvc;/reps/report/zdyzbdyb/addatabasetype.mvc;</action>
+						</node>
+						<node code="tj010203" name="修改指标" showOrder="2" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/toedit.mvc;/reps/report/zdyzbdyb/edit.mvc;/reps/report/zdyzbdyb/toeditdatabasetype.mvc;/reps/report/zdyzbdyb/editdatabasetype.mvc</action>
+						</node>
+						<node code="tj010204" name="删除指标" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/zdyzbdyb/delete.mvc;/reps/report/zdyzbdyb/deletedatabasetype.mvc;</action>
+						</node>
+					</nodes>
+				</node>
+				<node code="tj010300" name="创建报表" showOrder="3" newpage="false" type="Action">
+					<action>/reps/report/tabledefine/index.mvc;/reps/report/tabledefine/list.mvc;/reps/report/tabledefine/show.mvc</action>
+					<nodes>
+						<node code="tj010301" name="添加" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/tabledefine/toadd.mvc;/reps/report/tabledefine/add.mvc</action>
+						</node>
+						<node code="tj010302" name="修改" showOrder="2" newpage="false" type="Operate">
+							<action>
+								/reps/report/tabledefine/toedit.mvc;
+								/reps/report/tabledefine/edit.mvc;
+								/reps/report/tabledefine/toitemlist.mvc;
+								/reps/report/tabledefine/additem.mvc;
+								/reps/report/tabledefine/toedititem.mvc;
+								/reps/report/tabledefine/edititem.mvc;
+								/reps/report/tabledefine/deleteitem.mvc;
+								/reps/report/tabledefine/additem2.mvc;
+								/reps/report/tabledefine/chooseitem.mvc;
+								/reps/report/tabledefine/saveitem.mvc;
+								/reps/report/tabledefine/getitemlist.mvc;
+								/reps/report/tabledefine/getallitemname.mvc;
+								/reps/report/tabledefine/getallitembytableid.mvc
+							</action>
+						</node>
+						<node code="tj010303" name="删除" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/tabledefine/delete.mvc</action>
+						</node>
+						<node code="tj010304" name="创建数据表" showOrder="4" newpage="false" type="Operate">
+							<action>/reps/report/tabledefine/createtable.mvc</action>
+						</node>
+					</nodes>
+				</node>
+				<node code="tj010400" name="统计报表" showOrder="4" newpage="false" type="Action">
+					<action>/reps/report/statistics/index.mvc</action>
+					<nodes>
+						<node code="tj010401" name="统计" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/statistics/tj.mvc</action>
+						</node>
+						<node code="tj010110" name="统计师生人数" showOrder="1" newpage="false" type="Operate">
+							<action>/dc/statistics/populationstat.mvc</action>
+						</node>
+					</nodes>
+				</node>
+				<node code="tj010500" name="报表数据维护" showOrder="5" newpage="false" type="Action">
+					<action>/reps/report/tabledata/index.mvc;/reps/report/tabledata/list.mvc;/reps/report/tabledata/right.mvc</action>
+					<nodes>
+						<node code="tj010501" name="添加" showOrder="1" newpage="false" type="Operate">
+							<action>/reps/report/tabledata/toadd.mvc;/reps/report/tabledata/add.mvc</action>
+						</node>
+						<node code="tj010502" name="修改" showOrder="2" newpage="false" type="Operate">
+							<action>/reps/report/tabledata/toedit.mvc;/reps/report/tabledata/edit.mvc</action>
+						</node>
+						<node code="tj010503" name="删除" showOrder="3" newpage="false" type="Operate">
+							<action>/reps/report/tabledata/delete.mvc</action>
+						</node>
+					</nodes>
+				</node>
+			</nodes>
+		</node>
+	</menu>
+	<security>
+		 <authc>/reps/sys/district/tree.mvc</authc>
+	</security>
+</module>
