@@ -7,7 +7,7 @@
 	<reps:theme />
 </head>
 <body>
-<reps:container>
+<reps:container layout="true">
 	<reps:panel id="first" dock="top" action="editdatabasetype.mvc?indicatorId=${indicatorId }" formId="form" validForm="true" method="post" style="width:800px">
 			<reps:formcontent>
 			

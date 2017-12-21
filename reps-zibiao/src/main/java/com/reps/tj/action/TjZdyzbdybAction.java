@@ -1,6 +1,6 @@
 package com.reps.tj.action;
 
-import static com.reps.tj.enums.Meta.DATABASE_TYPE_LIST;
+import static com.reps.tj.enums.Meta.*;
 import static com.reps.tj.util.MetaManager.getMetaDatasFromSession;
 import static com.reps.tj.util.MetaManager.getValuesFromSession;
 import static com.reps.tj.util.MetaManager.removeMetaDatasFromSession;
@@ -33,6 +33,8 @@ import com.reps.core.util.StringUtil;
 import com.reps.core.web.AjaxStatus;
 import com.reps.core.web.BaseAction;
 import com.reps.tj.entity.DatabaseType;
+import com.reps.tj.entity.OutputFieldDefined;
+import com.reps.tj.entity.ParamDefined;
 import com.reps.tj.entity.TjZbztmcdyb;
 import com.reps.tj.entity.TjZdyzbdyb;
 import com.reps.tj.service.ITjZbztmcdybService;
@@ -383,7 +385,7 @@ public class TjZdyzbdybAction extends BaseAction {
 				updateMeta(tjZdyzbdyb, metaData);
 			} else {
 				if (null == databaseTypeList) {
-					List<DatabaseType> databaseTypes = new ArrayList<DatabaseType>();
+					List<DatabaseType> databaseTypes = new ArrayList<>();
 					databaseTypes.add(databaseType);
 					setValuesToSession(request, DATABASE_TYPE_LIST.getCode(), databaseTypes);
 				} else {
@@ -456,6 +458,8 @@ public class TjZdyzbdybAction extends BaseAction {
 			}
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("删除数据库类型失败", e);
 			return ajax(AjaxStatus.ERROR, "删除失败");
 		}
 	}
@@ -469,6 +473,246 @@ public class TjZdyzbdybAction extends BaseAction {
 	private JSONObject getIndicatorMeta(TjZdyzbdyb tjZdyzbdyb) {
 		String zbmeta = tjZdyzbdyb.getZbmeta();
 		return JSONObject.fromObject(zbmeta);
+	}
+	
+	/**
+	 * 指标元数据参数定义列表
+	 * @param pager
+	 * @param indicatorId 指标ID
+	 * @param flag
+	 * @param request
+	 * @return ModelAndView
+	 */
+	@RequestMapping(value = "/listparamdefined")
+	public ModelAndView listParamDefined(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listparamdefined");
+		List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
+		if (null == paramDefinedList && StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			paramDefinedList = getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class);
+		}
+		// 分页数据
+		mav.addObject("paramDefinedList", paramDefinedList);
+		mav.addObject("indicatorId", indicatorId);
+		mav.addObject("flag", flag);
+		return mav;
+	}
+	
+	@RequestMapping(value = "/toaddparamdefined")
+	public ModelAndView toAddParamDefined(String indicatorId) throws RepsException {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/addparamdefined");
+		mav.addObject("indicatorId", indicatorId);
+		return mav;
+	}
+	
+	@RequestMapping(value = "/addparamdefined")
+	@ResponseBody
+	public Object addParamDefined(ParamDefined paramDefined, String indicatorId, HttpServletRequest request) {
+		try {
+			List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
+			paramDefined.setId(IDGenerator.generate());
+			// 若指标ID不为空，指标修改页面添加指标元数据信息
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				String metaData = addSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), paramDefined);
+				updateMeta(tjZdyzbdyb, metaData);
+			} else {
+				if (null == paramDefinedList) {
+					List<ParamDefined> paramDefineds = new ArrayList<>();
+					paramDefineds.add(paramDefined);
+					setValuesToSession(request, PARAM_DEFINED_LIST.getCode(), paramDefineds);
+				} else {
+					paramDefinedList.add(paramDefined);
+				}
+			}
+			return ajax(AjaxStatus.OK, "添加成功");
+		} catch (RepsException e) {
+			e.printStackTrace();
+			log.error("添加参数定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+	
+	@RequestMapping(value = "/toeditparamdefined")
+	public Object toEditParamDefined(String indicatorId, String paramDefId) {
+		try {
+			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editparamdefined");
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			ParamDefined paramDefined = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class), paramDefId, "id");
+			mav.addObject("paramDefined", paramDefined);
+			mav.addObject("indicatorId", indicatorId);
+			return mav;
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改参数定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+	
+	@RequestMapping(value = "/editparamdefined")
+	@ResponseBody
+	public Object editParamDefined(ParamDefined paramDefined, String indicatorId) {
+		try {
+			if (paramDefined == null) {
+				throw new RepsException("数据不完整");
+			}
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			List<ParamDefined> paramDefinedList = getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class);
+			ParamDefined bean = getSpecialValueFromList(paramDefinedList, paramDefined.getId(), "id");
+			Collections.replaceAll(paramDefinedList, bean, paramDefined);
+			//替换元数据中特定的值
+			String metaJson = replaceSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), paramDefinedList);
+			updateMeta(tjZdyzbdyb, metaJson);
+			return ajax(AjaxStatus.OK, "修改成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改参数定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+	
+	@RequestMapping(value = "/deleteparamdefined")
+	@ResponseBody
+	public Object deleteParamDefined(String paramDefId, String indicatorId, HttpServletRequest request) {
+		try {
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				//获取指标元数据json对象
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				ParamDefined bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class), paramDefId, "id");
+				//从元数据JSON中移除
+				String metaJson = removeSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), bean);
+				updateMeta(tjZdyzbdyb, metaJson);
+			} else {
+				List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
+				paramDefinedList.remove(getSpecialValueFromList(paramDefinedList, paramDefId, "id"));
+			}
+			return ajax(AjaxStatus.OK, "删除成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("删除参数定义失败", e);
+			return ajax(AjaxStatus.ERROR, "删除失败");
+		}
+	}
+	
+	@RequestMapping(value = "/listoutputfieldefined")
+	public ModelAndView listOutputFieldDefined(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listoutputfieldefined");
+		List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
+		if (null == outputFieldDefinedList && StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			outputFieldDefinedList = getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class);
+		}
+		// 分页数据
+		mav.addObject("outputFieldDefinedList", outputFieldDefinedList);
+		mav.addObject("indicatorId", indicatorId);
+		mav.addObject("flag", flag);
+		return mav;
+	}
+
+	@RequestMapping(value = "/toaddoutputfieldefined")
+	public ModelAndView toAddOutputFieldDefined(String indicatorId) throws RepsException {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/addoutputfieldefined");
+		mav.addObject("indicatorId", indicatorId);
+		return mav;
+	}
+
+	@RequestMapping(value = "/addoutputfieldefined")
+	@ResponseBody
+	public Object addOutputFieldDefined(OutputFieldDefined outputFieldDefined, String indicatorId, HttpServletRequest request) {
+		try {
+			List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
+			outputFieldDefined.setId(IDGenerator.generate());
+			// 若指标ID不为空，指标修改页面添加指标元数据信息
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				String metaData = addSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefined);
+				updateMeta(tjZdyzbdyb, metaData);
+			} else {
+				if (null == outputFieldDefinedList) {
+					List<OutputFieldDefined> outputFieldDefineds = new ArrayList<>();
+					outputFieldDefineds.add(outputFieldDefined);
+					setValuesToSession(request, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefineds);
+				} else {
+					outputFieldDefinedList.add(outputFieldDefined);
+				}
+			}
+			return ajax(AjaxStatus.OK, "添加成功");
+		} catch (RepsException e) {
+			e.printStackTrace();
+			log.error("添加输出字段定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/toeditoutputfieldefined")
+	public Object toEditOutputFieldDefined(String indicatorId, String outputFieldDefId) {
+		try {
+			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editoutputfieldefined");
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			OutputFieldDefined outputFieldDefined = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class), outputFieldDefId, "id");
+			mav.addObject("outputFieldDefined", outputFieldDefined);
+			mav.addObject("indicatorId", indicatorId);
+			return mav;
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改输出字段定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/editoutputfieldefined")
+	@ResponseBody
+	public Object editOutputFieldDefined(OutputFieldDefined outputFieldDefined, String indicatorId) {
+		try {
+			if (outputFieldDefined == null) {
+				throw new RepsException("数据不完整");
+			}
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			List<OutputFieldDefined> outputFieldDefinedList = getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class);
+			OutputFieldDefined bean = getSpecialValueFromList(outputFieldDefinedList, outputFieldDefined.getId(), "id");
+			Collections.replaceAll(outputFieldDefinedList, bean, outputFieldDefined);
+			//替换元数据中特定的值
+			String metaJson = replaceSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefinedList);
+			updateMeta(tjZdyzbdyb, metaJson);
+			return ajax(AjaxStatus.OK, "修改成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改输出字段定义失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/deleteoutputfieldefined")
+	@ResponseBody
+	public Object deleteOutputFieldDefined(String outputFieldDefId, String indicatorId, HttpServletRequest request) {
+		try {
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				//获取指标元数据json对象
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				OutputFieldDefined bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class), outputFieldDefId, "id");
+				//从元数据JSON中移除
+				String metaJson = removeSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), bean);
+				updateMeta(tjZdyzbdyb, metaJson);
+			} else {
+				List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
+				outputFieldDefinedList.remove(getSpecialValueFromList(outputFieldDefinedList, outputFieldDefId, "id"));
+			}
+			return ajax(AjaxStatus.OK, "删除成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("删除输出字段定义失败", e);
+			return ajax(AjaxStatus.ERROR, "删除失败");
+		}
 	}
 
 }

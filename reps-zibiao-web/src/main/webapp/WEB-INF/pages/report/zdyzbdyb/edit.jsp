@@ -66,10 +66,9 @@
 		<div class="block_title" id="divMeta">
 		<h3>指标元数据信息</h3>
 		<reps:tabs style="height:300px;">
-			<reps:tabitem value="数据库类型" url="listdatabasetype.mvc?indicatorId=${indicator.id }">
-			</reps:tabitem>
-			<reps:tabitem value="参数定义"></reps:tabitem>
-			<reps:tabitem value="输出字段定义"></reps:tabitem>
+			<reps:tabitem value="数据库类型" url="listdatabasetype.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="参数定义" url="listparamdefined.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="输出字段定义" url="listoutputfieldefined.mvc?indicatorId=${indicator.id }"></reps:tabitem>
 			<reps:tabitem value="引用统计项目分类"></reps:tabitem>
 			<reps:tabitem value="关联明细指标"></reps:tabitem>
 		</reps:tabs>
