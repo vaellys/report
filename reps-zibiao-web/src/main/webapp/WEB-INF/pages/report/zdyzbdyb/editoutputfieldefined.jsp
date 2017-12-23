@@ -29,19 +29,19 @@
 				</reps:formfield>
 				
 				<reps:formfield label="显示宽度" labelStyle="width:20%;" textStyle="width:20%;">
-					<reps:input name="showWidth" dataType="integernum" required="true">${outputFieldDefined.showWidth}</reps:input>
+					<reps:input name="showWidth" dataType="integernum">${outputFieldDefined.showWidth}</reps:input>
 				</reps:formfield>
 				
 				<reps:formfield label="对齐方式" labelStyle="width:15%" textStyle="width:30%;">
-					<reps:input name="alignment" maxLength="30" required="true">${outputFieldDefined.alignment}</reps:input>
+					<reps:input name="alignment" maxLength="30">${outputFieldDefined.alignment}</reps:input>
 				</reps:formfield>
 				
 				<reps:formfield label="可否隐藏" labelStyle="width:20%;" textStyle="width:20%;">
-					<reps:input name="isHide" maxLength="30" required="true">${outputFieldDefined.isHide}</reps:input>
+					<reps:input name="isHide" maxLength="30" >${outputFieldDefined.isHide}</reps:input>
 				</reps:formfield>
 				
 				<reps:formfield label="显示格式" labelStyle="width:15%" textStyle="width:30%;">
-					<reps:input name="showFormat" maxLength="30" required="true">${outputFieldDefined.showFormat}</reps:input>
+					<reps:input name="showFormat" maxLength="30" >${outputFieldDefined.showFormat}</reps:input>
 				</reps:formfield>
 				
 			</reps:formcontent>

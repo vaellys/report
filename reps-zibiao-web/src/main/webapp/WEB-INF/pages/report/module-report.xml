@@ -13,6 +13,7 @@
 						/reps/report/zdyzbdyb/listdatabasetype.mvc;
 						/reps/report/zdyzbdyb/listparamdefined.mvc;
 						/reps/report/zdyzbdyb/listoutputfieldefined.mvc;
+						/reps/report/zdyzbdyb/liststatisticsitemcategory.mvc;
 					</action>
 					<nodes>
 						<node code="tj010102" name="添加指标主题" showOrder="1" newpage="false" type="Operate">
@@ -34,6 +35,8 @@
 								/reps/report/zdyzbdyb/addparamdefined.mvc;
 								/reps/report/zdyzbdyb/toaddoutputfieldefined.mvc;
 								/reps/report/zdyzbdyb/addoutputfieldefined.mvc;
+								/reps/report/zdyzbdyb/toaddstatisticsitemcategory.mvc;
+								/reps/report/zdyzbdyb/addstatisticsitemcategory.mvc;
 							</action>
 						</node>
 						<node code="tj010203" name="修改指标" showOrder="2" newpage="false" type="Operate">
@@ -46,6 +49,8 @@
 								/reps/report/zdyzbdyb/editparamdefined.mvc;
 								/reps/report/zdyzbdyb/toeditoutputfieldefined.mvc;
 								/reps/report/zdyzbdyb/editoutputfieldefined.mvc;
+								/reps/report/zdyzbdyb/toeditstatisticsitemcategory.mvc;
+								/reps/report/zdyzbdyb/editstatisticsitemcategory.mvc;
 							</action>
 						</node>
 						<node code="tj010204" name="删除指标" showOrder="3" newpage="false" type="Operate">
@@ -54,6 +59,7 @@
 								/reps/report/zdyzbdyb/deletedatabasetype.mvc;
 								/reps/report/zdyzbdyb/deleteparamdefined.mvc;
 								/reps/report/zdyzbdyb/deleteoutputfieldefined.mvc;
+								/reps/report/zdyzbdyb/deletestatisticsitemcategory.mvc;
 							</action>
 						</node>
 					</nodes>
