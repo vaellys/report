@@ -18,7 +18,9 @@ public enum Meta {
 	
 	OUTPUT_FIELD_DEFINED("输出字段定义", "outputFieldDefined"),
 	
-	STATISTICS_ITEM_CATEGORY("引用统计项目分类", "statisticsItemCategory");
+	STATISTICS_ITEM_CATEGORY("引用统计项目分类", "statisticsItemCategory"),
+	
+	DETAILS_INDICATOR("关联明细指标", "detailsIndicator");
 
 	private String code;
 	private String text;

@@ -39,6 +39,7 @@ import com.reps.core.util.StringUtil;
 import com.reps.core.web.AjaxStatus;
 import com.reps.core.web.BaseAction;
 import com.reps.tj.entity.DatabaseType;
+import com.reps.tj.entity.DetailsIndicator;
 import com.reps.tj.entity.OutputFieldDefined;
 import com.reps.tj.entity.ParamDefined;
 import com.reps.tj.entity.StatisticsItemCategory;
@@ -493,6 +494,9 @@ public class TjZdyzbdybAction extends BaseAction {
 	
 	private JSONObject getIndicatorMeta(TjZdyzbdyb tjZdyzbdyb) {
 		String zbmeta = tjZdyzbdyb.getZbmeta();
+		if(StringUtil.isBlank(zbmeta)) {
+			zbmeta = "{\"indicatorMetaInfo\":{}}";
+		}
 		return JSONObject.fromObject(zbmeta);
 	}
 	
@@ -890,6 +894,136 @@ public class TjZdyzbdybAction extends BaseAction {
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error("删除统计项目分类失败", e);
+			return ajax(AjaxStatus.ERROR, "删除失败");
+		}
+	}
+	
+	@RequestMapping(value = "/listdetailsindicator")
+	public ModelAndView listDetailsIndicator(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listdetailsindicator");
+		List<DetailsIndicator> detailsIndicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
+		if (null == detailsIndicatorList && StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			detailsIndicatorList = getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class);
+		}
+		// 分页数据
+		mav.addObject("detailsIndicatorList", detailsIndicatorList);
+		mav.addObject("indicatorId", indicatorId);
+		mav.addObject("flag", flag);
+		return mav;
+	}
+
+	@RequestMapping(value = "/toaddetailsindicator")
+	public ModelAndView toAddDetailsIndicator(String indicatorId) throws RepsException {
+		ModelAndView mav = getModelAndView("/report/zdyzbdyb/addetailsindicator");
+		mav.addObject("indicatorId", indicatorId);
+		return mav;
+	}
+
+	@RequestMapping(value = "/addetailsindicator")
+	@ResponseBody
+	public Object addDetailsIndicator(DetailsIndicator detailsindicator, String indicatorId, HttpServletRequest request) {
+		try {
+			List<DetailsIndicator> detailsindicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
+			detailsindicator.setId(IDGenerator.generate());
+			// 若指标ID不为空，指标修改页面添加指标元数据信息
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				String metaData = addSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), detailsindicator);
+				updateMeta(tjZdyzbdyb, metaData);
+			} else {
+				if (null == detailsindicatorList) {
+					List<DetailsIndicator> detailsindicators = new ArrayList<>();
+					detailsindicators.add(detailsindicator);
+					setValuesToSession(request, DETAILS_INDICATOR.getCode(), detailsindicators);
+				} else {
+					detailsindicatorList.add(detailsindicator);
+				}
+			}
+			return ajax(AjaxStatus.OK, "添加成功");
+		} catch (RepsException e) {
+			e.printStackTrace();
+			log.error("添加关联明细指标失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/toeditdetailsindicator")
+	public Object toEditDetailsIndicator(String indicatorId, String detailId, HttpServletRequest request) {
+		try {
+			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editdetailsindicator");
+			DetailsIndicator detailsIndicator = null;
+			// 若指标ID不为空，指标修改页面添加指标元数据信息
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				detailsIndicator = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class), detailId, "id");
+			}else {
+				List<DetailsIndicator> list = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
+				detailsIndicator = getSpecialValueFromList(list, detailId, "id");
+			}
+			mav.addObject("detailsIndicator", detailsIndicator);
+			mav.addObject("indicatorId", indicatorId);
+			return mav;
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改关联明细指标失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/editdetailsindicator")
+	@ResponseBody
+	public Object editDetailsIndicator(DetailsIndicator detailsIndicator, String indicatorId, HttpServletRequest request) {
+		try {
+			if (detailsIndicator == null) {
+				throw new RepsException("数据不完整");
+			}
+			// 若指标ID不为空，指标修改页面添加指标元数据信息
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				List<DetailsIndicator> detailsIndicatorList = getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class);
+				DetailsIndicator bean = getSpecialValueFromList(detailsIndicatorList, detailsIndicator.getId(), "id");
+				Collections.replaceAll(detailsIndicatorList, bean, detailsIndicator);
+				//替换元数据中特定的值
+				String metaJson = replaceSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), detailsIndicatorList);
+				updateMeta(tjZdyzbdyb, metaJson);
+			}else {
+				List<DetailsIndicator> list = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
+				DetailsIndicator bean = getSpecialValueFromList(list, detailsIndicator.getId(), "id");
+				Collections.replaceAll(list, bean, detailsIndicator);
+			}
+			return ajax(AjaxStatus.OK, "修改成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("修改关联明细指标失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/deletedetailsindicator")
+	@ResponseBody
+	public Object deleteDetailsIndicator(String detailId, String indicatorId, HttpServletRequest request) {
+		try {
+			if (StringUtil.isNotBlank(indicatorId)) {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				//获取指标元数据json对象
+				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+				DetailsIndicator bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class), detailId, "id");
+				//从元数据JSON中移除
+				String metaJson = removeSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), bean);
+				updateMeta(tjZdyzbdyb, metaJson);
+			} else {
+				List<DetailsIndicator> detailsIndicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
+				detailsIndicatorList.remove(getSpecialValueFromList(detailsIndicatorList, detailId, "id"));
+			}
+			return ajax(AjaxStatus.OK, "删除成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("删除关联明细指标失败", e);
 			return ajax(AjaxStatus.ERROR, "删除失败");
 		}
 	}

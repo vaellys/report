@@ -71,7 +71,7 @@
 			<reps:tabitem value="参数定义" url="listparamdefined.mvc"></reps:tabitem>
 			<reps:tabitem value="输出字段定义" url="listoutputfieldefined.mvc"></reps:tabitem>
 			<reps:tabitem value="引用统计项目分类" url="liststatisticsitemcategory.mvc"></reps:tabitem>
-			<reps:tabitem value="关联明细指标"></reps:tabitem>
+			<reps:tabitem value="关联明细指标" url="listdetailsindicator.mvc"></reps:tabitem>
 		</reps:tabs>
 		</div>
 		</div>

@@ -37,14 +37,31 @@ public class MetaJsonParse {
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> getSpecialValuesFromJson(JSONObject json, String key, Class<T> clazz) throws RepsException {
 		try {
-			JSONObject dataJson = json.getJSONObject(INDICATOR_META_INFO);
-			JSONArray jsonArray = dataJson.getJSONArray(key);
+			JSONObject dataJson = getJsonObject(json);
+			JSONArray jsonArray = getJsonArray(key, dataJson);
 			JsonConfig config = new JsonConfig();
 			return (List<T>) JSONArray.toList(jsonArray, clazz.newInstance(), config);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RepsException("解析指标元数据异常", e);
 		}
+	}
+
+	private static JSONArray getJsonArray(String key, JSONObject dataJson) {
+		if(!dataJson.containsKey(key)) {
+			JSONArray jsonArray = new JSONArray();
+			dataJson.put(key, jsonArray);
+		}
+		return dataJson.optJSONArray(key);
+	}
+
+	private static JSONObject getJsonObject(JSONObject json) {
+		JSONObject dataJson = json.optJSONObject(INDICATOR_META_INFO);
+		if(null == dataJson) {
+			dataJson = new JSONObject();
+			json.put(INDICATOR_META_INFO, dataJson);
+		}
+		return dataJson;
 	}
 
 	/**
@@ -87,7 +104,7 @@ public class MetaJsonParse {
 	 * @throws RepsException
 	 */
 	public static <T> String replaceSpecialValueFromJson(JSONObject json, String key, List<T> newVal) throws RepsException {
-		JSONObject dataJson = json.getJSONObject(INDICATOR_META_INFO);
+		JSONObject dataJson = getJsonObject(json);
 		dataJson.put(key, newVal);
 		return json.toString();
 	}
@@ -104,8 +121,8 @@ public class MetaJsonParse {
 	 * @throws RepsException
 	 */
 	public static <T> String addSpecialValueFromJson(JSONObject json, String key, T newVal) throws RepsException {
-		JSONObject dataJson = json.getJSONObject(INDICATOR_META_INFO);
-		JSONArray jsonArray = dataJson.getJSONArray(key);
+		JSONObject dataJson = getJsonObject(json);
+		JSONArray jsonArray = getJsonArray(key, dataJson);
 		jsonArray.add(newVal);
 		return json.toString();
 	}
@@ -122,8 +139,8 @@ public class MetaJsonParse {
 	 * @throws RepsException
 	 */
 	public static <T> String removeSpecialValueFromJson(JSONObject json, String key, T newVal) throws RepsException {
-		JSONObject dataJson = json.getJSONObject(INDICATOR_META_INFO);
-		JSONArray jsonArray = dataJson.getJSONArray(key);
+		JSONObject dataJson = getJsonObject(json);
+		JSONArray jsonArray = getJsonArray(key, dataJson);
 		jsonArray.remove(JSONObject.fromObject(newVal));
 		return json.toString();
 	}
