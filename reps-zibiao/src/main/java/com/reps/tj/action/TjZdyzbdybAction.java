@@ -1,13 +1,17 @@
 package com.reps.tj.action;
 
-import static com.reps.tj.enums.Meta.*;
+import static com.reps.tj.enums.Meta.DATABASE_TYPE_LIST;
+import static com.reps.tj.enums.Meta.DETAILS_INDICATOR;
 import static com.reps.tj.enums.Meta.OUTPUT_FIELD_DEFINED;
 import static com.reps.tj.enums.Meta.PARAM_DEFINED_LIST;
+import static com.reps.tj.enums.Meta.STATISTICS_ITEM_CATEGORY;
 import static com.reps.tj.util.MetaJsonParse.addSpecialValueFromJson;
 import static com.reps.tj.util.MetaJsonParse.getSpecialValueFromList;
+import static com.reps.tj.util.MetaJsonParse.getSpecialValueFromObject;
 import static com.reps.tj.util.MetaJsonParse.getSpecialValuesFromJson;
 import static com.reps.tj.util.MetaJsonParse.removeSpecialValueFromJson;
 import static com.reps.tj.util.MetaJsonParse.replaceSpecialValueFromJson;
+import static com.reps.tj.util.MetaJsonParse.setSpecialValueFromObject;
 import static com.reps.tj.util.MetaManager.getMetaDatasFromSession;
 import static com.reps.tj.util.MetaManager.getValuesFromSession;
 import static com.reps.tj.util.MetaManager.removeMetaDatasFromSession;
@@ -59,6 +63,8 @@ import net.sf.json.JSONObject;
 @Controller
 @RequestMapping(value = RepsConstant.ACTION_BASE_PATH + "/report/zdyzbdyb")
 public class TjZdyzbdybAction extends BaseAction {
+	private static final String ID = "id";
+
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
@@ -254,6 +260,7 @@ public class TjZdyzbdybAction extends BaseAction {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/list");
 		ListResult<TjZdyzbdyb> listResult = zdyzbdybService.query(pager.getStartRow(), pager.getPageSize(), info);
 		setModelAndView(pager, info, mav, listResult, namespace);
+		removeMetaDatasFromSession();
 		return mav;
 	}
 
@@ -351,17 +358,22 @@ public class TjZdyzbdybAction extends BaseAction {
 	@RequestMapping(value = "/listdatabasetype")
 	public ModelAndView listDatabaseType(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listdatabasetype");
-		List<DatabaseType> databaseList = getValuesFromSession(request, DATABASE_TYPE_LIST.getCode());
-		if (null == databaseList && StringUtil.isNotBlank(indicatorId)) {
-			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-			databaseList = getSpecialValuesFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), DatabaseType.class);
-		}
+		List<DatabaseType> databaseList = getIndicatorMetaList(indicatorId, DATABASE_TYPE_LIST.getCode(), DatabaseType.class, request);
 		// 分页数据
 		mav.addObject("databaseTypeList", databaseList);
 		mav.addObject("indicatorId", indicatorId);
 		mav.addObject("flag", flag);
 		return mav;
+	}
+
+	private <T> List<T> getIndicatorMetaList(String indicatorId, String key, Class<T> clazz, HttpServletRequest request) {
+		List<T> list = getValuesFromSession(request, key);
+		if (null == list && StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			list = getSpecialValuesFromJson(jsonData, key, clazz);
+		}
+		return list;
 	}
 
 	@RequestMapping(value = "/toaddatabasetype")
@@ -383,23 +395,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object addDatabaseType(DatabaseType databaseType, String indicatorId, HttpServletRequest request) {
 		try {
-			List<DatabaseType> databaseTypeList = getValuesFromSession(request, DATABASE_TYPE_LIST.getCode());
-			databaseType.setId(IDGenerator.generate());
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				String metaData = addSpecialValueFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), databaseType);
-				updateMeta(tjZdyzbdyb, metaData);
-			} else {
-				if (null == databaseTypeList) {
-					List<DatabaseType> databaseTypes = new ArrayList<>();
-					databaseTypes.add(databaseType);
-					setValuesToSession(request, DATABASE_TYPE_LIST.getCode(), databaseTypes);
-				} else {
-					databaseTypeList.add(databaseType);
-				}
-			}
+			addIndicatorMeta(databaseType, indicatorId, DATABASE_TYPE_LIST.getCode(), request);
 			return ajax(AjaxStatus.OK, "添加成功");
 		} catch (RepsException e) {
 			e.printStackTrace();
@@ -408,20 +404,39 @@ public class TjZdyzbdybAction extends BaseAction {
 		}
 	}
 
+	/**
+	 * 指标元数据增加
+	 * @param t
+	 * @param indicatorId
+	 * @param key
+	 * @param request
+	 * @throws RepsException
+	 */
+	private <T> void addIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) throws RepsException{
+		List<T> resultList = getValuesFromSession(request, key);
+		setSpecialValueFromObject(t, IDGenerator.generate(), ID);
+		// 若指标ID不为空，指标修改页面添加指标元数据信息
+		if (StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			String metaData = addSpecialValueFromJson(jsonData, key, t);
+			updateMeta(tjZdyzbdyb, metaData);
+		} else {
+			if (null == resultList) {
+				List<T> list = new ArrayList<>();
+				list.add(t);
+				setValuesToSession(request, key, list);
+			} else {
+				resultList.add(t);
+			}
+		}
+	}
+
 	@RequestMapping(value = "/toeditdatabasetype")
 	public Object toEditDatabaseType(String indicatorId, String dbTypeId, HttpServletRequest request) {
 		try {
 			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editdatabasetype");
-			DatabaseType databaseType = null;
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				databaseType = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), DatabaseType.class), dbTypeId, "id");
-			}else {
-				List<DatabaseType> list = getValuesFromSession(request, DATABASE_TYPE_LIST.getCode());
-				databaseType = getSpecialValueFromList(list, dbTypeId, "id");
-			}
+			DatabaseType databaseType = getIndicatorMeta(indicatorId, dbTypeId, DATABASE_TYPE_LIST.getCode(), DatabaseType.class, request);
 			mav.addObject("databaseType", databaseType);
 			mav.addObject("indicatorId", indicatorId);
 			return mav;
@@ -432,6 +447,29 @@ public class TjZdyzbdybAction extends BaseAction {
 		}
 	}
 
+	/**
+	 * 指标元数据查询
+	 * @param indicatorId
+	 * @param id
+	 * @param key
+	 * @param clazz
+	 * @param request
+	 * @return
+	 */
+	private <T> T getIndicatorMeta(String indicatorId, String id, String key, Class<T> clazz, HttpServletRequest request) {
+		T bean = null;
+		// 若指标ID不为空，指标修改页面添加指标元数据信息
+		if (StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, key, clazz), id, ID);
+		}else {
+			List<T> list = getValuesFromSession(request, key);
+			bean = getSpecialValueFromList(list, id, ID);
+		}
+		return bean;
+	}
+
 	@RequestMapping(value = "/editdatabasetype")
 	@ResponseBody
 	public Object editDatabaseType(DatabaseType databaseType, String indicatorId, HttpServletRequest request) {
@@ -439,21 +477,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			if (databaseType == null) {
 				throw new RepsException("数据不完整");
 			}
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				List<DatabaseType> databaseTypeList = getSpecialValuesFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), DatabaseType.class);
-				DatabaseType bean = getSpecialValueFromList(databaseTypeList, databaseType.getId(), "id");
-				Collections.replaceAll(databaseTypeList, bean, databaseType);
-				//替换元数据中特定的值
-				String metaJson = replaceSpecialValueFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), databaseTypeList);
-				updateMeta(tjZdyzbdyb, metaJson);
-			}else {
-				List<DatabaseType> list = getValuesFromSession(request, DATABASE_TYPE_LIST.getCode());
-				DatabaseType bean = getSpecialValueFromList(list, databaseType.getId(), "id");
-				Collections.replaceAll(list, bean, databaseType);
-			}
+			editIndicatorMeta(databaseType, indicatorId, DATABASE_TYPE_LIST.getCode(), request);
 			return ajax(AjaxStatus.OK, "修改成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -462,27 +486,66 @@ public class TjZdyzbdybAction extends BaseAction {
 		}
 	}
 
+	/**
+	 * 修改指标元数据
+	 * @param t
+	 * @param indicatorId
+	 * @param key
+	 * @param request
+	 */
+	@SuppressWarnings("unchecked")
+	private <T> void editIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) {
+		String idValue = getSpecialValueFromObject(t, ID);
+		// 若指标ID不为空，指标修改页面添加指标元数据信息
+		if (StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			List<T> resultList = (List<T>) getSpecialValuesFromJson(jsonData, key, t.getClass());
+			T bean = getSpecialValueFromList(resultList, idValue, ID);
+			Collections.replaceAll(resultList, bean, t);
+			//替换元数据中特定的值
+			String metaJson = replaceSpecialValueFromJson(jsonData, key, resultList);
+			updateMeta(tjZdyzbdyb, metaJson);
+		}else {
+			List<T> list = getValuesFromSession(request, key);
+			T bean = getSpecialValueFromList(list, idValue, ID);
+			Collections.replaceAll(list, bean, t);
+		}
+	}
+
 	@RequestMapping(value = "/deletedatabasetype")
 	@ResponseBody
 	public Object deleteDatabaseType(String dbTypeId, String indicatorId, HttpServletRequest request) {
 		try {
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				//获取指标元数据json对象
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				DatabaseType bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), DatabaseType.class), dbTypeId, "id");
-				//从元数据JSON中移除
-				String metaJson = removeSpecialValueFromJson(jsonData, DATABASE_TYPE_LIST.getCode(), bean);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<DatabaseType> databaseTypeList = getValuesFromSession(request, DATABASE_TYPE_LIST.getCode());
-				databaseTypeList.remove(getSpecialValueFromList(databaseTypeList, dbTypeId, "id"));
-			}
+			deleteIndicatorMeta(dbTypeId, indicatorId, DATABASE_TYPE_LIST.getCode(), DatabaseType.class, request);
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error("删除数据库类型失败", e);
 			return ajax(AjaxStatus.ERROR, "删除失败");
+		}
+	}
+
+	/**
+	 * 指标元数据删除
+	 * @param id
+	 * @param indicatorId
+	 * @param key
+	 * @param clazz
+	 * @param request
+	 */
+	private <T> void deleteIndicatorMeta(String id, String indicatorId, String key, Class<T> clazz, HttpServletRequest request) {
+		if (StringUtil.isNotBlank(indicatorId)) {
+			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+			//获取指标元数据json对象
+			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
+			T bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, key, clazz), id, ID);
+			//从元数据JSON中移除
+			String metaJson = removeSpecialValueFromJson(jsonData, key, bean);
+			updateMeta(tjZdyzbdyb, metaJson);
+		} else {
+			List<DatabaseType> resultList = getValuesFromSession(request, key);
+			resultList.remove(getSpecialValueFromList(resultList, id, ID));
 		}
 	}
 
@@ -511,12 +574,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@RequestMapping(value = "/listparamdefined")
 	public ModelAndView listParamDefined(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listparamdefined");
-		List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
-		if (null == paramDefinedList && StringUtil.isNotBlank(indicatorId)) {
-			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-			paramDefinedList = getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class);
-		}
+		List<ParamDefined> paramDefinedList = getIndicatorMetaList(indicatorId, PARAM_DEFINED_LIST.getCode(), ParamDefined.class, request);
 		// 分页数据
 		mav.addObject("paramDefinedList", paramDefinedList);
 		mav.addObject("indicatorId", indicatorId);
@@ -535,23 +593,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object addParamDefined(ParamDefined paramDefined, String indicatorId, HttpServletRequest request) {
 		try {
-			List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
-			paramDefined.setId(IDGenerator.generate());
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				String metaData = addSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), paramDefined);
-				updateMeta(tjZdyzbdyb, metaData);
-			} else {
-				if (null == paramDefinedList) {
-					List<ParamDefined> paramDefineds = new ArrayList<>();
-					paramDefineds.add(paramDefined);
-					setValuesToSession(request, PARAM_DEFINED_LIST.getCode(), paramDefineds);
-				} else {
-					paramDefinedList.add(paramDefined);
-				}
-			}
+			addIndicatorMeta(paramDefined, indicatorId, PARAM_DEFINED_LIST.getCode(), request);
 			return ajax(AjaxStatus.OK, "添加成功");
 		} catch (RepsException e) {
 			e.printStackTrace();
@@ -564,16 +606,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	public Object toEditParamDefined(String indicatorId, String paramDefId, HttpServletRequest request) {
 		try {
 			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editparamdefined");
-			ParamDefined paramDefined = null;
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				paramDefined = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class), paramDefId, "id");
-			} else {
-				List<ParamDefined> list = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
-				paramDefined = getSpecialValueFromList(list, paramDefId, "id");
-			}
+			ParamDefined paramDefined = getIndicatorMeta(indicatorId, paramDefId, PARAM_DEFINED_LIST.getCode(), ParamDefined.class, request);
 			mav.addObject("paramDefined", paramDefined);
 			mav.addObject("indicatorId", indicatorId);
 			return mav;
@@ -591,21 +624,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			if (paramDefined == null) {
 				throw new RepsException("数据不完整");
 			}
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				List<ParamDefined> paramDefinedList = getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class);
-				ParamDefined bean = getSpecialValueFromList(paramDefinedList, paramDefined.getId(), "id");
-				Collections.replaceAll(paramDefinedList, bean, paramDefined);
-				//替换元数据中特定的值
-				String metaJson = replaceSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), paramDefinedList);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<ParamDefined> list = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
-				ParamDefined bean = getSpecialValueFromList(list, paramDefined.getId(), "id");
-				Collections.replaceAll(list, bean, paramDefined);
-			}
+			editIndicatorMeta(paramDefined, indicatorId, PARAM_DEFINED_LIST.getCode(), request);
 			return ajax(AjaxStatus.OK, "修改成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -618,18 +637,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object deleteParamDefined(String paramDefId, String indicatorId, HttpServletRequest request) {
 		try {
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				//获取指标元数据json对象
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				ParamDefined bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), ParamDefined.class), paramDefId, "id");
-				//从元数据JSON中移除
-				String metaJson = removeSpecialValueFromJson(jsonData, PARAM_DEFINED_LIST.getCode(), bean);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<ParamDefined> paramDefinedList = getValuesFromSession(request, PARAM_DEFINED_LIST.getCode());
-				paramDefinedList.remove(getSpecialValueFromList(paramDefinedList, paramDefId, "id"));
-			}
+			deleteIndicatorMeta(paramDefId, indicatorId, PARAM_DEFINED_LIST.getCode(), ParamDefined.class, request);
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -641,12 +649,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@RequestMapping(value = "/listoutputfieldefined")
 	public ModelAndView listOutputFieldDefined(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listoutputfieldefined");
-		List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
-		if (null == outputFieldDefinedList && StringUtil.isNotBlank(indicatorId)) {
-			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-			outputFieldDefinedList = getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class);
-		}
+		List<OutputFieldDefined> outputFieldDefinedList = getIndicatorMetaList(indicatorId, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class, request);
 		// 分页数据
 		mav.addObject("outputFieldDefinedList", outputFieldDefinedList);
 		mav.addObject("indicatorId", indicatorId);
@@ -665,23 +668,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object addOutputFieldDefined(OutputFieldDefined outputFieldDefined, String indicatorId, HttpServletRequest request) {
 		try {
-			List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
-			outputFieldDefined.setId(IDGenerator.generate());
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				String metaData = addSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefined);
-				updateMeta(tjZdyzbdyb, metaData);
-			} else {
-				if (null == outputFieldDefinedList) {
-					List<OutputFieldDefined> outputFieldDefineds = new ArrayList<>();
-					outputFieldDefineds.add(outputFieldDefined);
-					setValuesToSession(request, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefineds);
-				} else {
-					outputFieldDefinedList.add(outputFieldDefined);
-				}
-			}
+			addIndicatorMeta(outputFieldDefined, indicatorId, OUTPUT_FIELD_DEFINED.getCode(), request);
 			return ajax(AjaxStatus.OK, "添加成功");
 		} catch (RepsException e) {
 			e.printStackTrace();
@@ -694,16 +681,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	public Object toEditOutputFieldDefined(String indicatorId, String outputFieldDefId, HttpServletRequest request) {
 		try {
 			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editoutputfieldefined");
-			OutputFieldDefined outputFieldDefined = null;
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				outputFieldDefined = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class), outputFieldDefId, "id");
-			} else {
-				List<OutputFieldDefined> list = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
-				outputFieldDefined = getSpecialValueFromList(list, outputFieldDefId, "id");
-			}
+			OutputFieldDefined outputFieldDefined = getIndicatorMeta(indicatorId, outputFieldDefId, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class, request);
 			mav.addObject("outputFieldDefined", outputFieldDefined);
 			mav.addObject("indicatorId", indicatorId);
 			return mav;
@@ -721,21 +699,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			if (outputFieldDefined == null) {
 				throw new RepsException("数据不完整");
 			}
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				List<OutputFieldDefined> outputFieldDefinedList = getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class);
-				OutputFieldDefined bean = getSpecialValueFromList(outputFieldDefinedList, outputFieldDefined.getId(), "id");
-				Collections.replaceAll(outputFieldDefinedList, bean, outputFieldDefined);
-				//替换元数据中特定的值
-				String metaJson = replaceSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), outputFieldDefinedList);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<OutputFieldDefined> list = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
-				OutputFieldDefined bean = getSpecialValueFromList(list, outputFieldDefined.getId(), "id");
-				Collections.replaceAll(list, bean, outputFieldDefined);
-			}
+			editIndicatorMeta(outputFieldDefined, indicatorId, OUTPUT_FIELD_DEFINED.getCode(), request);
 			return ajax(AjaxStatus.OK, "修改成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -748,18 +712,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object deleteOutputFieldDefined(String outputFieldDefId, String indicatorId, HttpServletRequest request) {
 		try {
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				//获取指标元数据json对象
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				OutputFieldDefined bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class), outputFieldDefId, "id");
-				//从元数据JSON中移除
-				String metaJson = removeSpecialValueFromJson(jsonData, OUTPUT_FIELD_DEFINED.getCode(), bean);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<OutputFieldDefined> outputFieldDefinedList = getValuesFromSession(request, OUTPUT_FIELD_DEFINED.getCode());
-				outputFieldDefinedList.remove(getSpecialValueFromList(outputFieldDefinedList, outputFieldDefId, "id"));
-			}
+			deleteIndicatorMeta(outputFieldDefId, indicatorId, OUTPUT_FIELD_DEFINED.getCode(), OutputFieldDefined.class, request);
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -771,12 +724,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@RequestMapping(value = "/liststatisticsitemcategory")
 	public ModelAndView listStatisticsItemCategory(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/liststatisticsitemcategory");
-		List<StatisticsItemCategory> statisticsItemCategoryList = getValuesFromSession(request, STATISTICS_ITEM_CATEGORY.getCode());
-		if (null == statisticsItemCategoryList && StringUtil.isNotBlank(indicatorId)) {
-			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-			statisticsItemCategoryList = getSpecialValuesFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class);
-		}
+		List<StatisticsItemCategory> statisticsItemCategoryList = getIndicatorMetaList(indicatorId, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class, request);
 		// 分页数据
 		mav.addObject("statisticsItemCategoryList", statisticsItemCategoryList);
 		mav.addObject("indicatorId", indicatorId);
@@ -795,23 +743,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object addStatisticsItemCategory(StatisticsItemCategory statisticsItemCategory, String indicatorId, HttpServletRequest request) {
 		try {
-			List<StatisticsItemCategory> statisticsItemCategoryList = getValuesFromSession(request, STATISTICS_ITEM_CATEGORY.getCode());
-			statisticsItemCategory.setId(IDGenerator.generate());
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				String metaData = addSpecialValueFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), statisticsItemCategory);
-				updateMeta(tjZdyzbdyb, metaData);
-			} else {
-				if (null == statisticsItemCategoryList) {
-					List<StatisticsItemCategory> statisticsItemCategorys = new ArrayList<>();
-					statisticsItemCategorys.add(statisticsItemCategory);
-					setValuesToSession(request, STATISTICS_ITEM_CATEGORY.getCode(), statisticsItemCategorys);
-				} else {
-					statisticsItemCategoryList.add(statisticsItemCategory);
-				}
-			}
+			addIndicatorMeta(statisticsItemCategory, indicatorId, STATISTICS_ITEM_CATEGORY.getCode(), request);
 			return ajax(AjaxStatus.OK, "添加成功");
 		} catch (RepsException e) {
 			e.printStackTrace();
@@ -824,16 +756,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	public Object toEditStatisticsItemCategory(String indicatorId, String itemId, HttpServletRequest request) {
 		try {
 			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editstatisticsitemcategory");
-			StatisticsItemCategory statisticsItemCategory = null;
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				statisticsItemCategory = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class), itemId, "id");
-			} else {
-				List<StatisticsItemCategory> list = getValuesFromSession(request, STATISTICS_ITEM_CATEGORY.getCode());
-				statisticsItemCategory = getSpecialValueFromList(list, itemId, "id");
-			}
+			StatisticsItemCategory statisticsItemCategory = getIndicatorMeta(indicatorId, itemId, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class, request);
 			mav.addObject("statisticsItemCategory", statisticsItemCategory);
 			mav.addObject("indicatorId", indicatorId);
 			return mav;
@@ -851,21 +774,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			if (statisticsItemCategory == null) {
 				throw new RepsException("数据不完整");
 			}
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				List<StatisticsItemCategory> statisticsItemCategoryList = getSpecialValuesFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class);
-				StatisticsItemCategory bean = getSpecialValueFromList(statisticsItemCategoryList, statisticsItemCategory.getId(), "id");
-				Collections.replaceAll(statisticsItemCategoryList, bean, statisticsItemCategory);
-				//替换元数据中特定的值
-				String metaJson = replaceSpecialValueFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), statisticsItemCategoryList);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<StatisticsItemCategory> list = getValuesFromSession(request, STATISTICS_ITEM_CATEGORY.getCode());
-				StatisticsItemCategory bean = getSpecialValueFromList(list, statisticsItemCategory.getId(), "id");
-				Collections.replaceAll(list, bean, statisticsItemCategory);
-			}
+			editIndicatorMeta(statisticsItemCategory, indicatorId, STATISTICS_ITEM_CATEGORY.getCode(), request);
 			return ajax(AjaxStatus.OK, "修改成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -878,18 +787,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object deleteStatisticsItemCategory(String itemId, String indicatorId, HttpServletRequest request) {
 		try {
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				//获取指标元数据json对象
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				StatisticsItemCategory bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class), itemId, "id");
-				//从元数据JSON中移除
-				String metaJson = removeSpecialValueFromJson(jsonData, STATISTICS_ITEM_CATEGORY.getCode(), bean);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<StatisticsItemCategory> statisticsItemCategoryList = getValuesFromSession(request, STATISTICS_ITEM_CATEGORY.getCode());
-				statisticsItemCategoryList.remove(getSpecialValueFromList(statisticsItemCategoryList, itemId, "id"));
-			}
+			deleteIndicatorMeta(itemId, indicatorId, STATISTICS_ITEM_CATEGORY.getCode(), StatisticsItemCategory.class, request);
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -901,12 +799,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@RequestMapping(value = "/listdetailsindicator")
 	public ModelAndView listDetailsIndicator(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listdetailsindicator");
-		List<DetailsIndicator> detailsIndicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
-		if (null == detailsIndicatorList && StringUtil.isNotBlank(indicatorId)) {
-			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-			detailsIndicatorList = getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class);
-		}
+		List<DetailsIndicator> detailsIndicatorList = getIndicatorMetaList(indicatorId, DETAILS_INDICATOR.getCode(), DetailsIndicator.class, request);
 		// 分页数据
 		mav.addObject("detailsIndicatorList", detailsIndicatorList);
 		mav.addObject("indicatorId", indicatorId);
@@ -925,23 +818,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object addDetailsIndicator(DetailsIndicator detailsindicator, String indicatorId, HttpServletRequest request) {
 		try {
-			List<DetailsIndicator> detailsindicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
-			detailsindicator.setId(IDGenerator.generate());
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				String metaData = addSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), detailsindicator);
-				updateMeta(tjZdyzbdyb, metaData);
-			} else {
-				if (null == detailsindicatorList) {
-					List<DetailsIndicator> detailsindicators = new ArrayList<>();
-					detailsindicators.add(detailsindicator);
-					setValuesToSession(request, DETAILS_INDICATOR.getCode(), detailsindicators);
-				} else {
-					detailsindicatorList.add(detailsindicator);
-				}
-			}
+			addIndicatorMeta(detailsindicator, indicatorId, DETAILS_INDICATOR.getCode(), request);
 			return ajax(AjaxStatus.OK, "添加成功");
 		} catch (RepsException e) {
 			e.printStackTrace();
@@ -954,16 +831,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	public Object toEditDetailsIndicator(String indicatorId, String detailId, HttpServletRequest request) {
 		try {
 			ModelAndView mav = getModelAndView("/report/zdyzbdyb/editdetailsindicator");
-			DetailsIndicator detailsIndicator = null;
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				detailsIndicator = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class), detailId, "id");
-			}else {
-				List<DetailsIndicator> list = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
-				detailsIndicator = getSpecialValueFromList(list, detailId, "id");
-			}
+			DetailsIndicator detailsIndicator = getIndicatorMeta(indicatorId, detailId, DETAILS_INDICATOR.getCode(), DetailsIndicator.class, request);
 			mav.addObject("detailsIndicator", detailsIndicator);
 			mav.addObject("indicatorId", indicatorId);
 			return mav;
@@ -981,21 +849,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			if (detailsIndicator == null) {
 				throw new RepsException("数据不完整");
 			}
-			// 若指标ID不为空，指标修改页面添加指标元数据信息
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				List<DetailsIndicator> detailsIndicatorList = getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class);
-				DetailsIndicator bean = getSpecialValueFromList(detailsIndicatorList, detailsIndicator.getId(), "id");
-				Collections.replaceAll(detailsIndicatorList, bean, detailsIndicator);
-				//替换元数据中特定的值
-				String metaJson = replaceSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), detailsIndicatorList);
-				updateMeta(tjZdyzbdyb, metaJson);
-			}else {
-				List<DetailsIndicator> list = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
-				DetailsIndicator bean = getSpecialValueFromList(list, detailsIndicator.getId(), "id");
-				Collections.replaceAll(list, bean, detailsIndicator);
-			}
+			editIndicatorMeta(detailsIndicator, indicatorId, DETAILS_INDICATOR.getCode(), request);
 			return ajax(AjaxStatus.OK, "修改成功");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1008,18 +862,7 @@ public class TjZdyzbdybAction extends BaseAction {
 	@ResponseBody
 	public Object deleteDetailsIndicator(String detailId, String indicatorId, HttpServletRequest request) {
 		try {
-			if (StringUtil.isNotBlank(indicatorId)) {
-				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-				//获取指标元数据json对象
-				JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
-				DetailsIndicator bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, DETAILS_INDICATOR.getCode(), DetailsIndicator.class), detailId, "id");
-				//从元数据JSON中移除
-				String metaJson = removeSpecialValueFromJson(jsonData, DETAILS_INDICATOR.getCode(), bean);
-				updateMeta(tjZdyzbdyb, metaJson);
-			} else {
-				List<DetailsIndicator> detailsIndicatorList = getValuesFromSession(request, DETAILS_INDICATOR.getCode());
-				detailsIndicatorList.remove(getSpecialValueFromList(detailsIndicatorList, detailId, "id"));
-			}
+			deleteIndicatorMeta(detailId, indicatorId, DETAILS_INDICATOR.getCode(), DetailsIndicator.class, request);
 			return ajax(AjaxStatus.OK, "删除成功");
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -48,11 +48,16 @@ public class MetaJsonParse {
 	}
 
 	private static JSONArray getJsonArray(String key, JSONObject dataJson) {
+		JSONArray jsonArray = new JSONArray();
 		if(!dataJson.containsKey(key)) {
-			JSONArray jsonArray = new JSONArray();
 			dataJson.put(key, jsonArray);
 		}
-		return dataJson.optJSONArray(key);
+		JSONArray optJSONArray = dataJson.optJSONArray(key);
+		if(null == optJSONArray) {
+			optJSONArray = jsonArray;
+			dataJson.put(key, optJSONArray);
+		}
+		return dataJson.getJSONArray(key);
 	}
 
 	private static JSONObject getJsonObject(JSONObject json) {
@@ -89,6 +94,40 @@ public class MetaJsonParse {
 			e.printStackTrace();
 			throw new RepsException("查询特定元数据信息异常", e);
 		}
+	}
+	
+	/**
+	 * 设置单个对象的值
+	 * @param t
+	 * @param id
+	 * @param fieldName
+	 * @throws RepsException
+	 */
+	public static <T> void setSpecialValueFromObject(T t, String id, String fieldName) throws RepsException {
+		try {
+			BeanUtils.setProperty(t, fieldName, id);
+		}catch(Exception e) {
+			e.printStackTrace();
+			throw new RepsException("设置特定元数据信息异常", e);
+		}
+		
+	}
+	
+	/**
+	 * 获取单个对象的值
+	 * @param t
+	 * @param fieldName
+	 * @return
+	 * @throws RepsException
+	 */
+	public static <T> String getSpecialValueFromObject(T t, String fieldName) throws RepsException {
+		try {
+			return BeanUtils.getProperty(t, fieldName);
+		}catch(Exception e) {
+			e.printStackTrace();
+			throw new RepsException("设置特定元数据信息异常", e);
+		}
+		
 	}
 
 	/**

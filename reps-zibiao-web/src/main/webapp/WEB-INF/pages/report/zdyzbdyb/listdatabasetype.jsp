@@ -44,7 +44,7 @@
 	<script type="text/javascript">
 		var my = function(data) {
 			messager.message(data, function() {
-				window.parent.location.reload();
+				window.location.href = "listdatabasetype.mvc?indicatorId=${indicatorId }";
 			});
 		};
 	</script>
