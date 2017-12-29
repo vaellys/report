@@ -44,12 +44,13 @@
 						<c:if test="${i.zbztId == topic.key}">${topic.value}</c:if>
 					</c:forEach>
 				</reps:gridfield>
-				<reps:gridfield title="指标算法" width="13">${i.zbsf}</reps:gridfield>
-				<reps:gridfield title="指标元数据" width="14" >${i.zbmeta}</reps:gridfield>
-				<reps:gridfield title="指标算法MSSQL" width="15" >${i.zbsfMssql}</reps:gridfield>
+			<%-- 	<reps:gridfield title="指标算法" width="13">${i.zbsf}</reps:gridfield> --%>
+				<%-- <reps:gridfield title="指标元数据" width="14" >${i.zbmeta}</reps:gridfield> --%>
+				<%-- <reps:gridfield title="指标算法MSSQL" width="15" >${i.zbsfMssql}</reps:gridfield>
 				<reps:gridfield title="指标算法MYSQL" width="13" >${i.zbsfMysql}</reps:gridfield>
 				<reps:gridfield title="指标算法ORACLE" width="15" >${i.zbsfOracle}</reps:gridfield>
-				<reps:gridfield title="指标算法MONGODB" width="15" >${i.zbsfMongodb}</reps:gridfield>
+				<reps:gridfield title="指标算法MONGODB" width="15" >${i.zbsfMongodb}</reps:gridfield> --%>
+				<reps:gridfield title="指标说明" width="10">${i.zbsm}</reps:gridfield>
 				<reps:gridfield title="操作" width="28">
 					<reps:button cssClass="add-table" value="添加子级指标" action="${ctx}/reps/report/zdyzbdyb/toadd.mvc?indicatorId=${i.id}"></reps:button>
 					<reps:button cssClass="modify-table" messageCode="manage.action.update" 

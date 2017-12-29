@@ -2,6 +2,9 @@ package com.reps.tj.action;
 
 import static com.reps.tj.enums.Meta.DATABASE_TYPE_LIST;
 import static com.reps.tj.enums.Meta.DETAILS_INDICATOR;
+import static com.reps.tj.enums.Meta.META_CODES;
+import static com.reps.tj.enums.Meta.META_MAPS;
+import static com.reps.tj.enums.Meta.META_JOINER;
 import static com.reps.tj.enums.Meta.OUTPUT_FIELD_DEFINED;
 import static com.reps.tj.enums.Meta.PARAM_DEFINED_LIST;
 import static com.reps.tj.enums.Meta.STATISTICS_ITEM_CATEGORY;
@@ -14,6 +17,7 @@ import static com.reps.tj.util.MetaJsonParse.replaceSpecialValueFromJson;
 import static com.reps.tj.util.MetaJsonParse.setSpecialValueFromObject;
 import static com.reps.tj.util.MetaManager.getMetaDatasFromSession;
 import static com.reps.tj.util.MetaManager.getValuesFromSession;
+import static com.reps.tj.util.MetaManager.removeCopyMetaDatasFromSession;
 import static com.reps.tj.util.MetaManager.removeMetaDatasFromSession;
 import static com.reps.tj.util.MetaManager.setValuesToSession;
 import static com.reps.tj.util.SelectTransformUtil.transSelectOptionStrFromMap;
@@ -195,6 +199,10 @@ public class TjZdyzbdybAction extends BaseAction {
 			indicator.setfId("-1");
 		}
 		TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicator.getId());
+		String zbmeta = indicator.getZbmeta();
+		if (StringUtil.isBlank(zbmeta)) {
+			indicator.setZbmeta(tjZdyzbdyb.getZbmeta());
+		}
 		zdyzbdybService.update(indicator);
 		// 如果修改了指标所属主题或者上级指标则刷新整个框架页面
 		if (!(tjZdyzbdyb.getTjZbztmcdyb().getZbztId().equals(indicator.getTjZbztmcdyb().getZbztId())) || !(indicator.getfId().equals(tjZdyzbdyb.getfId()))) {
@@ -368,6 +376,10 @@ public class TjZdyzbdybAction extends BaseAction {
 
 	private <T> List<T> getIndicatorMetaList(String indicatorId, String key, Class<T> clazz, HttpServletRequest request) {
 		List<T> list = getValuesFromSession(request, key);
+		return getIndicatorMetaList(indicatorId, key, clazz, list);
+	}
+
+	private <T> List<T> getIndicatorMetaList(String indicatorId, String key, Class<T> clazz, List<T> list) {
 		if (null == list && StringUtil.isNotBlank(indicatorId)) {
 			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
 			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
@@ -406,13 +418,14 @@ public class TjZdyzbdybAction extends BaseAction {
 
 	/**
 	 * 指标元数据增加
+	 * 
 	 * @param t
 	 * @param indicatorId
 	 * @param key
 	 * @param request
 	 * @throws RepsException
 	 */
-	private <T> void addIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) throws RepsException{
+	private <T> void addIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) throws RepsException {
 		List<T> resultList = getValuesFromSession(request, key);
 		setSpecialValueFromObject(t, IDGenerator.generate(), ID);
 		// 若指标ID不为空，指标修改页面添加指标元数据信息
@@ -449,6 +462,7 @@ public class TjZdyzbdybAction extends BaseAction {
 
 	/**
 	 * 指标元数据查询
+	 * 
 	 * @param indicatorId
 	 * @param id
 	 * @param key
@@ -456,14 +470,14 @@ public class TjZdyzbdybAction extends BaseAction {
 	 * @param request
 	 * @return
 	 */
-	private <T> T getIndicatorMeta(String indicatorId, String id, String key, Class<T> clazz, HttpServletRequest request) {
+	private <T> T getIndicatorMeta(String indicatorId, String id, String key, Class<T> clazz, HttpServletRequest request) throws RepsException {
 		T bean = null;
 		// 若指标ID不为空，指标修改页面添加指标元数据信息
 		if (StringUtil.isNotBlank(indicatorId)) {
 			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
 			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
 			bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, key, clazz), id, ID);
-		}else {
+		} else {
 			List<T> list = getValuesFromSession(request, key);
 			bean = getSpecialValueFromList(list, id, ID);
 		}
@@ -488,13 +502,14 @@ public class TjZdyzbdybAction extends BaseAction {
 
 	/**
 	 * 修改指标元数据
+	 * 
 	 * @param t
 	 * @param indicatorId
 	 * @param key
 	 * @param request
 	 */
 	@SuppressWarnings("unchecked")
-	private <T> void editIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) {
+	private <T> void editIndicatorMeta(T t, String indicatorId, String key, HttpServletRequest request) throws RepsException {
 		String idValue = getSpecialValueFromObject(t, ID);
 		// 若指标ID不为空，指标修改页面添加指标元数据信息
 		if (StringUtil.isNotBlank(indicatorId)) {
@@ -503,10 +518,10 @@ public class TjZdyzbdybAction extends BaseAction {
 			List<T> resultList = (List<T>) getSpecialValuesFromJson(jsonData, key, t.getClass());
 			T bean = getSpecialValueFromList(resultList, idValue, ID);
 			Collections.replaceAll(resultList, bean, t);
-			//替换元数据中特定的值
+			// 替换元数据中特定的值
 			String metaJson = replaceSpecialValueFromJson(jsonData, key, resultList);
 			updateMeta(tjZdyzbdyb, metaJson);
-		}else {
+		} else {
 			List<T> list = getValuesFromSession(request, key);
 			T bean = getSpecialValueFromList(list, idValue, ID);
 			Collections.replaceAll(list, bean, t);
@@ -528,19 +543,20 @@ public class TjZdyzbdybAction extends BaseAction {
 
 	/**
 	 * 指标元数据删除
+	 * 
 	 * @param id
 	 * @param indicatorId
 	 * @param key
 	 * @param clazz
 	 * @param request
 	 */
-	private <T> void deleteIndicatorMeta(String id, String indicatorId, String key, Class<T> clazz, HttpServletRequest request) {
+	private <T> void deleteIndicatorMeta(String id, String indicatorId, String key, Class<T> clazz, HttpServletRequest request) throws RepsException {
 		if (StringUtil.isNotBlank(indicatorId)) {
 			TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
-			//获取指标元数据json对象
+			// 获取指标元数据json对象
 			JSONObject jsonData = getIndicatorMeta(tjZdyzbdyb);
 			T bean = getSpecialValueFromList(getSpecialValuesFromJson(jsonData, key, clazz), id, ID);
-			//从元数据JSON中移除
+			// 从元数据JSON中移除
 			String metaJson = removeSpecialValueFromJson(jsonData, key, bean);
 			updateMeta(tjZdyzbdyb, metaJson);
 		} else {
@@ -549,24 +565,26 @@ public class TjZdyzbdybAction extends BaseAction {
 		}
 	}
 
-	private void updateMeta(TjZdyzbdyb tjZdyzbdyb, String metaJson) {
-		//修改数据库
+	private void updateMeta(TjZdyzbdyb tjZdyzbdyb, String metaJson) throws RepsException {
+		// 修改数据库
 		tjZdyzbdyb.setZbmeta(metaJson);
 		zdyzbdybService.update(tjZdyzbdyb);
 	}
-	
-	private JSONObject getIndicatorMeta(TjZdyzbdyb tjZdyzbdyb) {
+
+	private JSONObject getIndicatorMeta(TjZdyzbdyb tjZdyzbdyb) throws RepsException {
 		String zbmeta = tjZdyzbdyb.getZbmeta();
-		if(StringUtil.isBlank(zbmeta)) {
+		if (StringUtil.isBlank(zbmeta)) {
 			zbmeta = "{\"indicatorMetaInfo\":{}}";
 		}
 		return JSONObject.fromObject(zbmeta);
 	}
-	
+
 	/**
 	 * 指标元数据参数定义列表
+	 * 
 	 * @param pager
-	 * @param indicatorId 指标ID
+	 * @param indicatorId
+	 *            指标ID
 	 * @param flag
 	 * @param request
 	 * @return ModelAndView
@@ -581,14 +599,14 @@ public class TjZdyzbdybAction extends BaseAction {
 		mav.addObject("flag", flag);
 		return mav;
 	}
-	
+
 	@RequestMapping(value = "/toaddparamdefined")
 	public ModelAndView toAddParamDefined(String indicatorId) throws RepsException {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/addparamdefined");
 		mav.addObject("indicatorId", indicatorId);
 		return mav;
 	}
-	
+
 	@RequestMapping(value = "/addparamdefined")
 	@ResponseBody
 	public Object addParamDefined(ParamDefined paramDefined, String indicatorId, HttpServletRequest request) {
@@ -601,7 +619,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, e.getMessage());
 		}
 	}
-	
+
 	@RequestMapping(value = "/toeditparamdefined")
 	public Object toEditParamDefined(String indicatorId, String paramDefId, HttpServletRequest request) {
 		try {
@@ -616,7 +634,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, e.getMessage());
 		}
 	}
-	
+
 	@RequestMapping(value = "/editparamdefined")
 	@ResponseBody
 	public Object editParamDefined(ParamDefined paramDefined, String indicatorId, HttpServletRequest request) {
@@ -632,7 +650,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, e.getMessage());
 		}
 	}
-	
+
 	@RequestMapping(value = "/deleteparamdefined")
 	@ResponseBody
 	public Object deleteParamDefined(String paramDefId, String indicatorId, HttpServletRequest request) {
@@ -645,7 +663,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, "删除失败");
 		}
 	}
-	
+
 	@RequestMapping(value = "/listoutputfieldefined")
 	public ModelAndView listOutputFieldDefined(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listoutputfieldefined");
@@ -720,7 +738,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, "删除失败");
 		}
 	}
-	
+
 	@RequestMapping(value = "/liststatisticsitemcategory")
 	public ModelAndView listStatisticsItemCategory(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/liststatisticsitemcategory");
@@ -795,7 +813,7 @@ public class TjZdyzbdybAction extends BaseAction {
 			return ajax(AjaxStatus.ERROR, "删除失败");
 		}
 	}
-	
+
 	@RequestMapping(value = "/listdetailsindicator")
 	public ModelAndView listDetailsIndicator(Pagination pager, String indicatorId, Integer flag, HttpServletRequest request) {
 		ModelAndView mav = getModelAndView("/report/zdyzbdyb/listdetailsindicator");
@@ -868,6 +886,78 @@ public class TjZdyzbdybAction extends BaseAction {
 			e.printStackTrace();
 			log.error("删除关联明细指标失败", e);
 			return ajax(AjaxStatus.ERROR, "删除失败");
+		}
+	}
+
+	@RequestMapping(value = "/tocopymeta")
+	public Object toCopyMeta(String indicatorId) {
+		try {
+			ModelAndView mav = getModelAndView("/report/zdyzbdyb/copymeta");
+			mav.addObject("indicatorId", indicatorId);
+			mav.addObject("metaMaps", META_MAPS);
+			return mav;
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("复制指标元数据失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@RequestMapping(value = "/copymeta")
+	@ResponseBody
+	public Object copyMeta(String indicatorId, String metas, HttpServletRequest request) {
+		try {
+			if (StringUtil.isNotBlank(metas)) {
+				String[] metaKeys = metas.split(",");
+				// 复制之前清除原先的数据
+				removeCopyMetaDatasFromSession();
+				// 复制指标原数据
+				for (String key : metaKeys) {
+					if (DATABASE_TYPE_LIST.getCode().equals(key)) {
+						setValuesToSession(request, META_JOINER + key, getIndicatorMetaList(indicatorId, key, DatabaseType.class, request));
+					} else if (PARAM_DEFINED_LIST.getCode().equals(key)) {
+						setValuesToSession(request, META_JOINER + key, getIndicatorMetaList(indicatorId, key, ParamDefined.class, request));
+					} else if (OUTPUT_FIELD_DEFINED.getCode().equals(key)) {
+						setValuesToSession(request, META_JOINER + key, getIndicatorMetaList(indicatorId, key, OutputFieldDefined.class, request));
+					} else if (STATISTICS_ITEM_CATEGORY.getCode().equals(key)) {
+						setValuesToSession(request, META_JOINER + key, getIndicatorMetaList(indicatorId, key, StatisticsItemCategory.class, request));
+					} else if (DETAILS_INDICATOR.getCode().equals(key)) {
+						setValuesToSession(request, META_JOINER + key, getIndicatorMetaList(indicatorId, key, DetailsIndicator.class, request));
+					}
+				}
+			}
+			return ajax(AjaxStatus.OK, "复制成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("复制指标元数据失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(value = "/pastemeta")
+	@ResponseBody
+	public Object pasteMeta(HttpServletRequest request) {
+		try {
+			for (String code : META_CODES) {
+				List pasteData = getValuesFromSession(request, META_JOINER + code);
+				if (null == pasteData) {
+					continue;
+				}
+				List resultList = getValuesFromSession(request, code);
+				if (null == resultList) {
+					List list = new ArrayList<>();
+					list.addAll(pasteData);
+					setValuesToSession(request, code, list);
+				} else {
+					resultList.addAll(pasteData);
+				}
+			}
+			return ajax(AjaxStatus.OK, "粘贴成功");
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("复制指标元数据失败", e);
+			return ajax(AjaxStatus.ERROR, e.getMessage());
 		}
 	}
 

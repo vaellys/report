@@ -1,6 +1,6 @@
 package com.reps.tj.util;
 
-import static com.reps.tj.enums.Meta.META_CODES;
+import static com.reps.tj.enums.Meta.*;
 import static com.reps.tj.util.Constants.INDICATOR_META_INFO;
 
 import java.util.HashMap;
@@ -35,6 +35,13 @@ public class MetaManager {
 	public static void removeMetaDatasFromSession() throws RepsException {
 		HttpSessionManager currentSession = HttpSessionManager.getCurrent();
 		for (String key : META_CODES) {
+			currentSession.remove(key);
+		}
+	}
+	
+	public static void removeCopyMetaDatasFromSession() throws RepsException {
+		HttpSessionManager currentSession = HttpSessionManager.getCurrent();
+		for (String key : COPY_META_CODES) {
 			currentSession.remove(key);
 		}
 	}

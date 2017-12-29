@@ -1,5 +1,7 @@
 package com.reps.tj.action;
 
+import static com.reps.tj.util.MetaManager.removeMetaDatasFromSession;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +110,7 @@ public class TjZbztmcdybAction extends BaseAction {
 		mav.addObject("list", listResult.getList());
 		//分页参数
 		mav.addObject("pager", pager);
-				
+		removeMetaDatasFromSession();		
 		return mav;
 	}
 	

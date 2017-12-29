@@ -40,6 +40,9 @@
 								/reps/report/zdyzbdyb/addstatisticsitemcategory.mvc;
 								/reps/report/zdyzbdyb/toaddetailsindicator.mvc;
 								/reps/report/zdyzbdyb/addetailsindicator.mvc;
+								/reps/report/zdyzbdyb/tocopymeta.mvc;
+								/reps/report/zdyzbdyb/copymeta.mvc;
+								/reps/report/zdyzbdyb/pastemeta.mvc;
 							</action>
 						</node>
 						<node code="tj010203" name="修改指标" showOrder="2" newpage="false" type="Operate">

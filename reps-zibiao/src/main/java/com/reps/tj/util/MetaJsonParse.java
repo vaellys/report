@@ -110,7 +110,6 @@ public class MetaJsonParse {
 			e.printStackTrace();
 			throw new RepsException("设置特定元数据信息异常", e);
 		}
-		
 	}
 	
 	/**
@@ -127,7 +126,6 @@ public class MetaJsonParse {
 			e.printStackTrace();
 			throw new RepsException("设置特定元数据信息异常", e);
 		}
-		
 	}
 
 	/**

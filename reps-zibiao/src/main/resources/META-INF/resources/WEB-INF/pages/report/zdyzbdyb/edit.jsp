@@ -9,6 +9,9 @@
 <body>
 <reps:container>
 	<reps:panel id="first" dock="top" action="edit.mvc" formId="xform" validForm="true" style="width:800px">
+	<div class="block_container">
+		<div class="block_title" id="divIndicator">
+		<h3>指标基础信息</h3>
 		<reps:formcontent>
 			<reps:formfield label="指标名称" labelStyle="width:20%" textStyle="width:30%">
 				<input type="hidden" name="id" value="${indicator.id }">
@@ -26,9 +29,9 @@
 			<reps:formfield label="指标算法" fullRow="true">
 				<reps:input name="zbsf" multiLine="true" style="width:555px;height:250px">${indicator.zbsf }</reps:input>
 			</reps:formfield>
-			<reps:formfield label="指标元数据" fullRow="true">
+			<%-- <reps:formfield label="指标元数据" fullRow="true">
 				<reps:input name="zbmeta" multiLine="true" style="width:555px;height:250px">${indicator.zbmeta }</reps:input>
-			</reps:formfield>
+			</reps:formfield> --%>
 			<reps:formfield label="指标说明" fullRow="true">
 				<reps:input name="zbsm" multiLine="true" style="width:555px;height:70px">${indicator.zbsm }</reps:input>
 			</reps:formfield>
@@ -42,9 +45,10 @@
 				<reps:input name="zbsfOracle" multiLine="true" style="width:555px;height:250px">${indicator.zbsfOracle }</reps:input>
 			</reps:formfield>
 			<reps:formfield label="指标算法MONGODB" fullRow="true">
-				<reps:input name="zbsfMongodbb" multiLine="true" style="width:555px;height:250px">${indicator.zbsfMongodb }</reps:input>
+				<reps:input name="zbsfMongodb" multiLine="true" style="width:555px;height:250px">${indicator.zbsfMongodb }</reps:input>
 			</reps:formfield>
 		</reps:formcontent>
+		</div>
 		<reps:formbar>
 		<c:choose>
 		  <c:when test="${not empty topicId}">  
@@ -59,6 +63,19 @@
 		   </c:otherwise>
 		</c:choose>
 		</reps:formbar>
+		<div class="block_title" id="divMeta">
+		<h3>指标元数据信息</h3>
+		<reps:tabs style="height:300px;">
+			<reps:tabitem value="数据库类型" url="listdatabasetype.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="参数定义" url="listparamdefined.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="输出字段定义" url="listoutputfieldefined.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="引用统计项目分类" url="liststatisticsitemcategory.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+			<reps:tabitem value="关联明细指标" url="listdetailsindicator.mvc?indicatorId=${indicator.id }"></reps:tabitem>
+		</reps:tabs>
+		</div>
+		<br>
+		</div>
+		
 	</reps:panel>
 </reps:container>
 <script type="text/javascript">

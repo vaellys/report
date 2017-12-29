@@ -45,7 +45,7 @@ public class TjServiceImpl implements ITjService {
 	private List<List<Map<String, Object>>> valueMatrix;
 	
 	//被依赖项记录，在矩阵存储横向位置<被依赖项, 横向位置>
-	private Map<String, Integer> indexMatrix;
+	//private Map<String, Integer> indexMatrix;
 	
 	//常量值
 	private Map<String, String> constMap = new HashMap<String, String>();
@@ -582,7 +582,7 @@ public class TjServiceImpl implements ITjService {
 	 * @param depDataSet	依赖数据集名称
 	 * @param depColumn		依赖列名
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void setResultCache(TjTableItem item, String sql, String depDataSet, String depColumn, Object[] objects) throws RepsException{
 		try{
 			List<Map<String, Object>> list;

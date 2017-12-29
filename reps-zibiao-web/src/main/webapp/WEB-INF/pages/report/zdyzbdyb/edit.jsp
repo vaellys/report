@@ -29,9 +29,9 @@
 			<reps:formfield label="指标算法" fullRow="true">
 				<reps:input name="zbsf" multiLine="true" style="width:555px;height:250px">${indicator.zbsf }</reps:input>
 			</reps:formfield>
-			<reps:formfield label="指标元数据" fullRow="true">
+			<%-- <reps:formfield label="指标元数据" fullRow="true">
 				<reps:input name="zbmeta" multiLine="true" style="width:555px;height:250px">${indicator.zbmeta }</reps:input>
-			</reps:formfield>
+			</reps:formfield> --%>
 			<reps:formfield label="指标说明" fullRow="true">
 				<reps:input name="zbsm" multiLine="true" style="width:555px;height:70px">${indicator.zbsm }</reps:input>
 			</reps:formfield>
@@ -45,11 +45,13 @@
 				<reps:input name="zbsfOracle" multiLine="true" style="width:555px;height:250px">${indicator.zbsfOracle }</reps:input>
 			</reps:formfield>
 			<reps:formfield label="指标算法MONGODB" fullRow="true">
-				<reps:input name="zbsfMongodbb" multiLine="true" style="width:555px;height:250px">${indicator.zbsfMongodb }</reps:input>
+				<reps:input name="zbsfMongodb" multiLine="true" style="width:555px;height:250px">${indicator.zbsfMongodb }</reps:input>
 			</reps:formfield>
 		</reps:formcontent>
 		</div>
 		<reps:formbar>
+		<reps:dialog cssClass="btn_copy_a" id="btn_copy" iframe="true" width="300"
+					 height="210" url="tocopymeta.mvc?indicatorId=${indicator.id }" value="复制"></reps:dialog>
 		<c:choose>
 		  <c:when test="${not empty topicId}">  
 		  	<reps:ajax messageCode="edit.button.save" formId="xform" callBack="skip2" type="link" confirm="确定要提交修改？" cssClass="btn_save_a"></reps:ajax>

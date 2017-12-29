@@ -40,10 +40,10 @@
 							<reps:input name="zbsf" multiLine="true"
 								style="width:600px;height:100px" readonly="true">${indicator.zbsf }</reps:input>
 						</reps:formfield>
-						<reps:formfield label="指标元数据" fullRow="true">
+						<%-- <reps:formfield label="指标元数据" fullRow="true">
 							<reps:input name="zbmeta" multiLine="true"
 								style="width:600px;height:100px" readonly="true">${indicator.zbmeta }</reps:input>
-						</reps:formfield>
+						</reps:formfield> --%>
 						<reps:formfield label="指标说明" fullRow="true">
 							<reps:input name="zbsm" multiLine="true"
 								style="width:600px;height:100px" readonly="true">${indicator.zbsm }</reps:input>
@@ -61,7 +61,7 @@
 								style="width:600px;height:100px" readonly="true">${indicator.zbsfOracle }</reps:input>
 						</reps:formfield>
 						<reps:formfield label="指标算法MONGODB" fullRow="true">
-							<reps:input name="zbsfMongodbb" multiLine="true"
+							<reps:input name="zbsfMongodb" multiLine="true"
 								style="width:600px;height:100px" readonly="true">${indicator.zbsfMongodb }</reps:input>
 						</reps:formfield>
 					</reps:formcontent>

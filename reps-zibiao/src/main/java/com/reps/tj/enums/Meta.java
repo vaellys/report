@@ -2,7 +2,9 @@ package com.reps.tj.enums;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 元数据类型
@@ -46,11 +48,31 @@ public enum Meta {
 		this.text = text;
 	}
 
+	/**
+	 * 指标元数据session存储key
+	 */
 	public static final List<String> META_CODES = new ArrayList<>();
+	
+	/**
+	 * 复制指标元数据session存储key
+	 */
+	public static final List<String> COPY_META_CODES = new ArrayList<>();
+	
+	/**
+	 * 元数据key->value
+	 */
+	public static final Map<String, String> META_MAPS = new LinkedHashMap<>();
+	
+	/**
+	 * 复制元数据 存储 key 连接符
+	 */
+	public static final String META_JOINER = "_";
 
 	static {
 		for (Meta m : EnumSet.allOf(Meta.class)) {
 			META_CODES.add(m.code);
+			COPY_META_CODES.add(META_JOINER + m.code);
+			META_MAPS.put(m.getCode(), m.getText());
 		}
 	}
 

@@ -5,19 +5,27 @@
 <head>
 	<title>指标统计</title>
 	<reps:theme />
+	<style>
+	.panel-header {
+	    background-color: #ECF2F3;
+	    width: 400px;
+	}
+		
+	</style>
+	
 </head>
 <body onload="load()">
-	<reps:container layout="true">
-		<reps:panel id="myleft" dock="left" title="指标统计" border="true" style="width:200px;overflow-y:scroll;overflow-x:auto;">
+	<reps:container layout="true" >
+		<reps:panel id="myleft" dock="left" title="指标统计" border="true" style="width:250px;overflow:scroll;background:#fff;">
 			<reps:tree id="mytree" items="${treelist}" var="li" cssClass="" checkbox="false" expand="false">
 				<reps:treenode parentKey="${li.parentId}" key="${li.id}">
 					<a href="javascript:void(0);"
-						onclick="showChilds(this, '${li.id}', '${li.type}')" id="${li.id}" title="${li.name}">${li.name}</a>
+						onclick="showChilds(this, '${li.id}', '${li.type}')"  id="${li.id}" title="${li.name}">${li.name}</a>
 				</reps:treenode>
 			</reps:tree>
 		</reps:panel>
 		<reps:panel id="myCenter" dock="center" border="false">
-			<reps:iframe id="iframe" fit="false" ></reps:iframe>
+			<reps:iframe id="iframe" fit="true" ></reps:iframe>
 		</reps:panel>
 	</reps:container>
 </body>
