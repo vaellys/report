@@ -944,6 +944,9 @@ public class TjZdyzbdybAction extends BaseAction {
 				if (null == pasteData) {
 					continue;
 				}
+				for (int i = 0; i < pasteData.size(); i++) {
+					setSpecialValueFromObject(pasteData.get(i), IDGenerator.generate(), ID);
+				}
 				List resultList = getValuesFromSession(request, code);
 				if (null == resultList) {
 					List list = new ArrayList<>();
