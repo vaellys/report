@@ -88,9 +88,9 @@
 						<reps:tabitem value="关联明细指标" url="listdetailsindicator.mvc?indicatorId=${indicator.id }&flag=1"></reps:tabitem>
 					</reps:tabs>
 				</div>
-				<br>
 			</div>
 		</reps:panel>
+		<br/>
 	</reps:container>
 </body>
 </html>

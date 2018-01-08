@@ -7,8 +7,8 @@
 	<reps:theme />
 </head>
 <body>
-<reps:container layout="true">
-	<reps:panel id="first" dock="top" action="addatabasetype.mvc?indicatorId=${indicatorId }" formId="form" validForm="true" method="post" style="width:800px">
+<reps:container layout="true" >
+	<reps:panel id="first" dock="top" action="addatabasetype.mvc?indicatorId=${indicatorId }" formId="form" validForm="true" method="post" style="width:800px;">
 			<reps:formcontent>
 				
 				<reps:formfield label="数据库类型" fullRow="true">

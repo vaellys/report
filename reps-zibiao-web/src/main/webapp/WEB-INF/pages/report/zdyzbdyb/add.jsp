@@ -76,10 +76,12 @@
 		</reps:tabs>
 		</div>
 		</div>
-		<br/>
+		
 		
 	</reps:panel>
+	<br/>
 </reps:container>
+
 </body>
 <script type="text/javascript">
 	var skip = function(data) {

@@ -8,7 +8,7 @@ import static com.reps.tj.enums.Meta.META_JOINER;
 import static com.reps.tj.enums.Meta.OUTPUT_FIELD_DEFINED;
 import static com.reps.tj.enums.Meta.PARAM_DEFINED_LIST;
 import static com.reps.tj.enums.Meta.STATISTICS_ITEM_CATEGORY;
-import static com.reps.tj.util.MetaJsonParse.addSpecialValueFromJson;
+import static com.reps.tj.util.MetaJsonParse.*;
 import static com.reps.tj.util.MetaJsonParse.getSpecialValueFromList;
 import static com.reps.tj.util.MetaJsonParse.getSpecialValueFromObject;
 import static com.reps.tj.util.MetaJsonParse.getSpecialValuesFromJson;
@@ -937,30 +937,52 @@ public class TjZdyzbdybAction extends BaseAction {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(value = "/pastemeta")
 	@ResponseBody
-	public Object pasteMeta(HttpServletRequest request) {
+	public Object pasteMeta(String indicatorId, HttpServletRequest request) {
 		try {
-			for (String code : META_CODES) {
-				List pasteData = getValuesFromSession(request, META_JOINER + code);
-				if (null == pasteData) {
-					continue;
+			//新增操作
+			if(StringUtil.isBlank(indicatorId)) {
+				for (String code : META_CODES) {
+					List pasteData = getValuesFromSession(request, META_JOINER + code);
+					if (null == pasteData) {
+						continue;
+					}
+					setMetaIds(pasteData);
+					List resultList = getValuesFromSession(request, code);
+					if (null == resultList) {
+						List list = new ArrayList<>();
+						list.addAll(pasteData);
+						setValuesToSession(request, code, list);
+					} else {
+						resultList.addAll(pasteData);
+					}
 				}
-				for (int i = 0; i < pasteData.size(); i++) {
-					setSpecialValueFromObject(pasteData.get(i), IDGenerator.generate(), ID);
+				//更新操作
+			} else {
+				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
+				tjZdyzbdyb.setZbmeta("");
+				JSONObject indicatorMeta = getIndicatorMeta(tjZdyzbdyb);
+				for (String code : META_CODES) {
+					List pasteData = getValuesFromSession(request, META_JOINER + code);
+					if (null == pasteData) {
+						continue;
+					}
+					setMetaIds(pasteData);
+					setSpecialValuesFromJson(indicatorMeta, code, pasteData);
 				}
-				List resultList = getValuesFromSession(request, code);
-				if (null == resultList) {
-					List list = new ArrayList<>();
-					list.addAll(pasteData);
-					setValuesToSession(request, code, list);
-				} else {
-					resultList.addAll(pasteData);
-				}
+				updateMeta(tjZdyzbdyb, indicatorMeta.toString());
 			}
 			return ajax(AjaxStatus.OK, "粘贴成功");
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error("复制指标元数据失败", e);
 			return ajax(AjaxStatus.ERROR, e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void setMetaIds(List pasteData) {
+		for (int i = 0; i < pasteData.size(); i++) {
+			setSpecialValueFromObject(pasteData.get(i), IDGenerator.generate(), ID);
 		}
 	}
 

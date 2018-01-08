@@ -50,6 +50,9 @@
 		</reps:formcontent>
 		</div>
 		<reps:formbar>
+		<reps:dialog cssClass="btn_copy_a" id="btn_copy" iframe="true" width="300"
+					 height="210" url="tocopymeta.mvc?indicatorId=${indicator.id }" value="复制"></reps:dialog>
+		<reps:ajax  value="粘贴" callBack="callback" type="button" cssClass="btn_common" url="pastemeta.mvc?indicatorId=${indicator.id }"></reps:ajax>
 		<c:choose>
 		  <c:when test="${not empty topicId}">  
 		  	<reps:ajax messageCode="edit.button.save" formId="xform" callBack="skip2" type="link" confirm="确定要提交修改？" cssClass="btn_save_a"></reps:ajax>
@@ -73,10 +76,11 @@
 			<reps:tabitem value="关联明细指标" url="listdetailsindicator.mvc?indicatorId=${indicator.id }"></reps:tabitem>
 		</reps:tabs>
 		</div>
-		<br>
-		</div>
 		
+		</div>
 	</reps:panel>
+		<br>
+	
 </reps:container>
 <script type="text/javascript">
 	var skip = function(data) {
@@ -115,6 +119,12 @@
 					select.append(data.message);
 				}
 			}
+		});
+	}
+	
+	var callback = function(data) {
+		messager.message(data, function() {
+			window.location.reload();
 		});
 	}
 </script>

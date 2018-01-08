@@ -33,9 +33,9 @@
 				<reps:formfield label="指标算法" fullRow="true">
 					<reps:input name="zbsf" multiLine="true" style="width:555px;height:250px" ></reps:input>
 				</reps:formfield>
-				<!-- <reps:formfield label="指标元数据" fullRow="true">
+				<%-- <reps:formfield label="指标元数据" fullRow="true">
 					<reps:input name="zbmeta" multiLine="true" style="width:555px;height:250px"></reps:input>
-				</reps:formfield> -->
+				</reps:formfield> --%>
 				<reps:formfield label="指标说明" fullRow="true">
 					<reps:input name="zbsm" multiLine="true" style="width:555px;height:70px"></reps:input>
 				</reps:formfield>
@@ -54,6 +54,7 @@
 			</reps:formcontent>
 		</div>
 		<reps:formbar>
+			<reps:ajax  value="粘贴" callBack="callback" type="button" cssClass="btn_common" url="pastemeta.mvc"></reps:ajax>
 			<reps:ajax  messageCode="add.button.save" formId="form" callBack="skip" type="button" cssClass="btn_save"></reps:ajax>
 			<c:if test="${indicator.fId == '-1' || empty indicator.fId}">
 				<reps:button cssClass="btn_cancel_a" messageCode="add.button.cancel"
@@ -75,10 +76,12 @@
 		</reps:tabs>
 		</div>
 		</div>
-		<br/>
+		
 		
 	</reps:panel>
+	<br/>
 </reps:container>
+
 </body>
 <script type="text/javascript">
 	var skip = function(data) {
@@ -86,6 +89,12 @@
 			window.parent.location.href = "${ctx}/reps/report/namespace/index.mvc";
 		});
 	};
+	
+	var callback = function(data) {
+		messager.message(data, function() {
+			window.location.reload();
+		});
+	}
 
 </script>
 </html>

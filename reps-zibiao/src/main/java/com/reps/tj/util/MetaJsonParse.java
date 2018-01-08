@@ -46,6 +46,23 @@ public class MetaJsonParse {
 			throw new RepsException("解析指标元数据异常", e);
 		}
 	}
+	
+	/**
+	 * 设置指标元数据信息列表
+	 * @param json 指标元数据信息（源）
+	 * @param key
+	 * @param datas
+	 * @throws RepsException
+	 */
+	public static <T> void setSpecialValuesFromJson(JSONObject json, String key, List<T> datas) throws RepsException {
+		try {
+			JSONObject dataJson = getJsonObject(json);
+			dataJson.put(key, datas);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RepsException("设置指标元数据异常", e);
+		}
+	}
 
 	private static JSONArray getJsonArray(String key, JSONObject dataJson) {
 		JSONArray jsonArray = new JSONArray();
