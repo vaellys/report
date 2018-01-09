@@ -961,15 +961,21 @@ public class TjZdyzbdybAction extends BaseAction {
 				TjZdyzbdyb tjZdyzbdyb = zdyzbdybService.get(indicatorId);
 				tjZdyzbdyb.setZbmeta("");
 				JSONObject indicatorMeta = getIndicatorMeta(tjZdyzbdyb);
+				//判断是否有粘贴的数据
+				boolean flag = false;
 				for (String code : META_CODES) {
 					List pasteData = getValuesFromSession(request, META_JOINER + code);
 					if (null == pasteData) {
 						continue;
+					}else {
+						flag = true;
 					}
 					setMetaIds(pasteData);
 					setSpecialValuesFromJson(indicatorMeta, code, pasteData);
 				}
-				updateMeta(tjZdyzbdyb, indicatorMeta.toString());
+				if(flag) {
+					updateMeta(tjZdyzbdyb, indicatorMeta.toString());
+				}
 			}
 			return ajax(AjaxStatus.OK, "粘贴成功");
 		} catch (Exception e) {
